@@ -1,0 +1,118 @@
+name: Workflow template
+on:
+  workflow_call:
+jobs:
+  slackbuild_and_upload:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    container:
+      image: bobbintb/unraid-cicd
+      options: --privileged
+    steps:
+    - 
+      name: Checkout
+      uses: actions/checkout@v4
+    -
+      name: Import GPG key
+      uses: crazy-max/ghaction-import-gpg@v6
+      with:
+        gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+        passphrase: ${{ secrets.PASSPHRASE }}
+    - name: Cache packages
+      id: cache-packages
+      uses: actions/cache@v4
+      with:
+        path: /var/cache/packages
+        key: slackware-packages-${{ github.sha }}
+        restore-keys: |
+          slackware-packages-
+        # key: ${{ runner.os }}-slackpkg-${{ hashFiles('**/package-list.txt') }}
+        # restore-keys: |
+        #   ${{ runner.os }}-slackpkg-
+        #key: slackpkg-${{ runner.os }}-${{ inputs.VERSION }}-${{ hashFiles('SlackBuilds/**/*') }}
+        #restore-keys: |
+        #  slackpkg-${{ runner.os }}-${{ inputs.VERSION }}-
+    - 
+      name: Update slackpkg
+      run: |
+        slackpkg update
+        slackpkg upgrade glibc
+        slackpkg install make guile gc gcc kernel-headers binutils gettext pahole bc libbpf bison m4 squashfs
+        slackpkg reinstall openssl
+        
+        . /etc/os-release
+        json=$(curl -s https://releases.unraid.net/usb-creator)
+        url=$(echo "$json" | jq -r '.. | objects | select(.name == "'"Unraid $VERSION_ID"'") | .url')
+        filename=$(basename "${url}")
+        
+        echo -n "You are running Unraid ${VERSION_ID}. Downloading... "
+        [ -f $filename ] || wget $url
+        echo "done."
+        echo -n "Extracting Unraid... "
+        unzip -o -q $filename -d unRAIDServer
+        echo "done."
+        cd unRAIDServer
+        
+        echo -n "Determining kernel version needed for Unraid... "
+        KERNEL_VERSION=$(file bzimage | awk -F'version ' '{print $2}' | cut -d' ' -f1 | cut -d'-' -f1)
+        MAJOR_VERSION=${KERNEL_VERSION%%.*}
+        echo "${KERNEL_VERSION}"
+        echo -n "Downloading Linux kernel ${KERNEL_VERSION}... "
+        cd ..
+        [ -f linux-${KERNEL_VERSION}.tar.xz ] || wget https://cdn.kernel.org/pub/linux/kernel/v${MAJOR_VERSION}.x/linux-${KERNEL_VERSION}.tar.xz
+        echo "done."
+        
+        mkdir -p linux
+        echo -n "Extracting Linux kernel... "
+        tar xf linux-${KERNEL_VERSION}.tar.xz -C linux --strip-components 1
+        echo "done."
+        
+        cd unRAIDServer
+        unsquashfs -d patches bzfirmware src
+        cd ..
+        echo -n "Copying patches... "
+        cp -r unRAIDServer/patches/src/linux-*-Unraid/. linux/
+        
+        cd linux
+        find . -type f -iname '*.patch' -print0 | xargs -n1 -0 patch -p1 -i
+        ./scripts/config --enable CONFIG_MD_UNRAID \
+            --enable CONFIG_DEBUG_INFO \
+            --disable CONFIG_DEBUG_INFO_NONE \
+            --enable CONFIG_DEBUG_INFO_DWARF5 \
+            --disable CONFIG_DEBUG_INFO_REDUCED \
+            --enable CONFIG_DEBUG_INFO_COMPRESSED_NONE \
+            --disable CONFIG_DEBUG_INFO_COMPRESSED_ZLIB \
+            --disable CONFIG_DEBUG_INFO_COMPRESSED_ZSTD \
+            --disable CONFIG_DEBUG_INFO_SPLIT \
+            --enable CONFIG_DEBUG_INFO_BTF \
+            --enable CONFIG_PAHOLE_HAS_SPLIT_BTF \
+            --enable CONFIG_PAHOLE_HAS_LANG_EXCLUDE \
+            --enable CONFIG_DEBUG_INFO_BTF_MODULES \
+            --disable CONFIG_MODULE_ALLOW_BTF_MISMATCH \
+            --disable CONFIG_GDB_SCRIPTS \
+            --enable CONFIG_PROBE_EVENTS_BTF_ARGS
+        make oldconfig
+        make -j$(nproc) bzImage
+        make -j$(nproc)
+        make -j$(nproc) modules
+        pwd
+        cd linux
+        make INSTALL_MOD_PATH=../modules modules_install
+        cd ../unRAIDServer
+        unsquashfs -d modules bzmodules
+        rm -rf unRAIDServer/modules/modules/*-Unraid
+        cp -r modules/lib/modules/${KERNEL_VERSION}-Unraid unRAIDServer/modules/modules
+        mksquashfs modules bzmodules_new
+        mkdir release
+        cp linux/arch/x86_64/boot/bzImage release/bzimage
+        cp unRAIDServer/bzmodules_new release/bzmodules
+        cd release
+        sha256sum bzimage | cut -d " " -f 1 > bzimage.sha256
+        sha256sum bzmodules | cut -d " " -f 1 > bzmodules.sha256
+    # - 
+    #   name: Commit changes
+    #   uses: stefanzweifel/git-auto-commit-action@v5
+    #   with:
+    #     commit_message: 'updated ${{ inputs.NAME }}'
+    #     file_pattern: '*.txz *.tgz *.lst *.md5 *.meta *.txt *.gz *.bz2 *.TXT *.asc .gitattributes'
