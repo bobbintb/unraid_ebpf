@@ -87,9 +87,9 @@ jobs:
             --disable CONFIG_GDB_SCRIPTS \
             --enable CONFIG_PROBE_EVENTS_BTF_ARGS
         make oldconfig
-        make -j$(nproc) bzImage
+        # make -j$(nproc) bzImage
         make -j$(nproc)
-        make -j$(nproc) modules
+        # make -j$(nproc) modules
         pwd
         make INSTALL_MOD_PATH=../modules modules_install
         cd ../unRAIDServer
