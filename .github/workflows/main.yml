@@ -91,7 +91,6 @@ jobs:
         make -j$(nproc)
         make -j$(nproc) modules
         pwd
-        cd linux
         make INSTALL_MOD_PATH=../modules modules_install
         cd ../unRAIDServer
         unsquashfs -d modules bzmodules
