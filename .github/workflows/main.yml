@@ -1,6 +1,6 @@
 name: Workflow template
 on:
-  workflow_call:
+  workflow_dispatch:
 jobs:
   slackbuild_and_upload:
     runs-on: ubuntu-latest
