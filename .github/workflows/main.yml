@@ -87,22 +87,13 @@ jobs:
             --disable CONFIG_GDB_SCRIPTS \
             --enable CONFIG_PROBE_EVENTS_BTF_ARGS
         make oldconfig
-        # make -j$(nproc) bzImage
-        make -j$(nproc)
-        # make -j$(nproc) modules
+        make -j$(nproc) bzImage
         pwd
-        make INSTALL_MOD_PATH=../modules modules_install
         cd ../unRAIDServer
-        unsquashfs -d modules bzmodules
-        rm -rf unRAIDServer/modules/modules/*-Unraid
-        cp -r modules/lib/modules/${KERNEL_VERSION}-Unraid unRAIDServer/modules/modules
-        mksquashfs modules bzmodules_new
         mkdir release
         cp linux/arch/x86_64/boot/bzImage release/bzimage
-        cp unRAIDServer/bzmodules_new release/bzmodules
         cd release
         sha256sum bzimage | cut -d " " -f 1 > bzimage.sha256
-        sha256sum bzmodules | cut -d " " -f 1 > bzmodules.sha256
     # - 
     #   name: Commit changes
     #   uses: stefanzweifel/git-auto-commit-action@v5
