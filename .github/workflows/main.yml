@@ -84,13 +84,14 @@ jobs:
             --enable CONFIG_DEBUG_INFO_BTF_MODULES \
             --disable CONFIG_MODULE_ALLOW_BTF_MISMATCH \
             --disable CONFIG_GDB_SCRIPTS \
-            --enable CONFIG_PROBE_EVENTS_BTF_ARGS
+            --enable CONFIG_PROBE_EVENTS_BTF_ARGS \
+            --disable CONFIG_SCHED_CLASS_EXT
         make oldconfig
         make -j$(nproc) bzImage
         pwd
         cd ../unRAIDServer
         mkdir release
-        cp linux/arch/x86_64/boot/bzImage release/bzimage
+        cp arch/x86_64/boot/bzImage release/bzimage
         cd release
         sha256sum bzimage | cut -d " " -f 1 > bzimage.sha256
     # - 
