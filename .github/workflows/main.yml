@@ -30,10 +30,9 @@ jobs:
     - 
       name: Update slackpkg
       run: |
-        slackpkg update
-        slackpkg upgrade glibc
-        slackpkg install make guile gc gcc kernel-headers binutils gettext pahole bc libbpf bison m4 squashfs
-        slackpkg reinstall openssl
+        slackpkg update || true
+        slackpkg upgrade-all || true
+        slackpkg install make guile gc gcc kernel-headers binutils gettext pahole bc libbpf bison m4 squashfs || true
         
         . /etc/os-release
         json=$(curl -s https://releases.unraid.net/usb-creator)
