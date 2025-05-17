@@ -91,6 +91,7 @@ jobs:
         pwd
         cd ../unRAIDServer
         mkdir release
+        find / -name bzImage
         cp arch/x86_64/boot/bzImage release/bzimage
         cd release
         sha256sum bzimage | cut -d " " -f 1 > bzimage.sha256
