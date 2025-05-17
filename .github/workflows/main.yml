@@ -91,13 +91,12 @@ jobs:
         pwd
         cd ../unRAIDServer
         mkdir release
-        find / -name bzImage
         cp /__w/unraid_dev_mode/unraid_dev_mode/linux/arch/x86_64/boot/bzImage ./release/bzimage
         cd release
         sha256sum bzimage | cut -d " " -f 1 > bzimage.sha256
-    # - 
-    #   name: Commit changes
-    #   uses: stefanzweifel/git-auto-commit-action@v5
-    #   with:
-    #     commit_message: 'updated ${{ inputs.NAME }}'
-    #     file_pattern: '*.txz *.tgz *.lst *.md5 *.meta *.txt *.gz *.bz2 *.TXT *.asc .gitattributes'
+    - 
+      name: Commit changes
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: 'updated ${{ inputs.NAME }}'
+        file_pattern: 'bzimage'
