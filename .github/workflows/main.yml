@@ -91,6 +91,9 @@ jobs:
         mv arch/x86/boot/bzImage ../bzimage
         cd ..
         rm -dr ./linux/
+        rm -dr ./unRAIDServer/
+        rm unRAIDServer-*
+        rm linux-*
         pwd
         ls -ls
         # cd ../unRAIDServer
