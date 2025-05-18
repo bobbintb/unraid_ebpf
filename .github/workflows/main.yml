@@ -87,8 +87,9 @@ jobs:
             --enable CONFIG_PROBE_EVENTS_BTF_ARGS \
             --disable CONFIG_SCHED_CLASS_EXT
         make oldconfig
-        make -j$(nproc) bzImage
-        mv arch/x86/boot/bzImage ../bzimage
+        bzimagename=bzimage-${VERSION_ID}
+        make -j$(nproc) $bzimagename
+        mv arch/x86/boot/$bzimagename ../
         cd ..
         rm -dr ./linux/
         rm -dr ./unRAIDServer/
@@ -96,11 +97,7 @@ jobs:
         rm linux-*
         pwd
         ls -ls
-        # cd ../unRAIDServer
-        # mkdir release
-        # cp /__w/unraid_dev_mode/unraid_dev_mode/linux/arch/x86_64/boot/bzImage ./release/bzimage
-        # cd release
-        sha256sum bzimage | cut -d " " -f 1 > bzimage.sha256
+        sha256sum $bzimagename | cut -d " " -f 1 > $bzimagename.sha256
         REPO=${GITHUB_REPOSITORY##*/}
         REPO_DIR="/__w/${REPO}/${REPO}"
         git config --global --add safe.directory $REPO_DIR
