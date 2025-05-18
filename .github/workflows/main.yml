@@ -88,11 +88,15 @@ jobs:
             --disable CONFIG_SCHED_CLASS_EXT
         make oldconfig
         make -j$(nproc) bzImage
+        mv arch/x86/boot/bzImage ../bzimage
+        cd ..
+        rm -dr ./linux/
         pwd
-        cd ../unRAIDServer
-        mkdir release
-        cp /__w/unraid_dev_mode/unraid_dev_mode/linux/arch/x86_64/boot/bzImage ./release/bzimage
-        cd release
+        ls -ls
+        # cd ../unRAIDServer
+        # mkdir release
+        # cp /__w/unraid_dev_mode/unraid_dev_mode/linux/arch/x86_64/boot/bzImage ./release/bzimage
+        # cd release
         sha256sum bzimage | cut -d " " -f 1 > bzimage.sha256
         REPO=${GITHUB_REPOSITORY##*/}
         REPO_DIR="/__w/${REPO}/${REPO}"
