@@ -88,8 +88,8 @@ jobs:
             --disable CONFIG_SCHED_CLASS_EXT
         make oldconfig
         bzimagename=bzimage-${VERSION_ID}
-        make -j$(nproc) $bzimagename
-        mv arch/x86/boot/$bzimagename ../
+        make -j$(nproc) bzImage
+        mv arch/x86/boot/bzImage ../$bzimagename
         cd ..
         rm -dr ./linux/
         rm -dr ./unRAIDServer/
