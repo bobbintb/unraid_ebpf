@@ -39,6 +39,8 @@ jobs:
         url=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].url')
         # url=$(echo "$json" | jq -r '.. | objects | select(.name == "'"Unraid $VERSION_ID"'") | .url')
         filename=$(basename "${url}")
+        name=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].name')
+        VERSION_ID=$(echo $name | sed 's/^Unraid //')
         
         # echo -n "You are running Unraid ${VERSION_ID}. Downloading... "
         [ -f $filename ] || wget $url
