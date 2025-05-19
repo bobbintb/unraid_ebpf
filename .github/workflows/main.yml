@@ -30,8 +30,8 @@ jobs:
     -
       name: Update slackpkg
       run: |
+        slackpkg install llvm-13.0.0 zlib
         wget https://download.salixos.org/x86_64/extra-15.0/salix/development/pahole-1.23-x86_64-1salix15.0.txz
-        wget https://slackware.uk/slackware/slackware64-15.0/slackware64/d/llvm-13.0.0-x86_64-2.txz
         installpkg *.txz
         rm *.txz
         url=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].url')
