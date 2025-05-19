@@ -30,14 +30,7 @@ jobs:
     -
       name: Update slackpkg
       run: |
-        # slackpkg update || true
-        # slackpkg upgrade-all || true
-        # slackpkg install make guile gc gcc kernel-headers binutils gettext pahole bc libbpf bison m4 squashfs || true
-        
-        # . /etc/os-release
-        # json=$(curl -s https://releases.unraid.net/usb-creator)
         url=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].url')
-        # url=$(echo "$json" | jq -r '.. | objects | select(.name == "'"Unraid $VERSION_ID"'") | .url')
         filename=$(basename "${url}")
         name=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].name')
         VERSION_ID=$(echo $name | sed 's/^Unraid //')
@@ -93,6 +86,8 @@ jobs:
             --enable CONFIG_IKCONFIG_PROC
         make oldconfig
         bzimagename=bzimage-${VERSION_ID}
+        make vmlinux
+        llvm-objcopy --dump-section .BTF=vmlinux.btf ../vmlinux
         make -j$(nproc) bzImage
         mv arch/x86/boot/bzImage ../$bzimagename
         cd ..
