@@ -88,7 +88,9 @@ jobs:
             --disable CONFIG_MODULE_ALLOW_BTF_MISMATCH \
             --disable CONFIG_GDB_SCRIPTS \
             --enable CONFIG_PROBE_EVENTS_BTF_ARGS \
-            --disable CONFIG_SCHED_CLASS_EXT
+            --disable CONFIG_SCHED_CLASS_EXT \
+            --enable CONFIG_IKCONFIG \
+            --enable CONFIG_IKCONFIG_PROC
         make oldconfig
         bzimagename=bzimage-${VERSION_ID}
         make -j$(nproc) bzImage
