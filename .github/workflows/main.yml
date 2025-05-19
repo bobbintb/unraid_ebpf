@@ -84,9 +84,9 @@ jobs:
             --disable CONFIG_SCHED_CLASS_EXT \
             --enable CONFIG_IKCONFIG \
             --enable CONFIG_IKCONFIG_PROC
-        make oldconfig
+        make -j$(nproc) oldconfig
         bzimagename=bzimage-${VERSION_ID}
-        make vmlinux
+        make -j$(nproc) vmlinux
         llvm-objcopy --dump-section .BTF=vmlinux.btf ../vmlinux
         make -j$(nproc) bzImage
         mv arch/x86/boot/bzImage ../$bzimagename
