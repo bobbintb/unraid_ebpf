@@ -30,6 +30,9 @@ jobs:
     -
       name: Update slackpkg
       run: |
+        wget https://slackware.uk/slackware/slackware64-current/slackware64/d/pahole-1.30-x86_64-1.txz
+        installpkg pahole-1.30-x86_64-1.txz
+        rm pahole-1.30-x86_64-1.txz
         url=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].url')
         filename=$(basename "${url}")
         name=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].name')
@@ -87,7 +90,7 @@ jobs:
         make -j$(nproc) oldconfig
         bzimagename=bzimage-${VERSION_ID}
         make -j$(nproc) vmlinux
-        llvm-objcopy --dump-section .BTF=vmlinux.btf ../vmlinux
+        llvm-objcopy --dump-section .BTF=vmlinux.btf vmlinux
         make -j$(nproc) bzImage
         mv arch/x86/boot/bzImage ../$bzimagename
         cd ..
