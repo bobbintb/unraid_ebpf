@@ -7,7 +7,7 @@ jobs:
     permissions:
       contents: write
     container:
-      image: bobbintb/unraid-cicd
+      image: ghcr.io/ich777/unraid_kernel:gcc_11.2.0
       options: --privileged
     steps:
     - 
@@ -30,16 +30,17 @@ jobs:
     -
       name: Update slackpkg
       run: |
-        slackpkg update || true
+        # slackpkg update || true
         # slackpkg upgrade-all || true
-        slackpkg install make guile gc gcc kernel-headers binutils gettext pahole bc libbpf bison m4 squashfs || true
+        # slackpkg install make guile gc gcc kernel-headers binutils gettext pahole bc libbpf bison m4 squashfs || true
         
-        . /etc/os-release
-        json=$(curl -s https://releases.unraid.net/usb-creator)
-        url=$(echo "$json" | jq -r '.. | objects | select(.name == "'"Unraid $VERSION_ID"'") | .url')
+        # . /etc/os-release
+        # json=$(curl -s https://releases.unraid.net/usb-creator)
+        url=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].url')
+        # url=$(echo "$json" | jq -r '.. | objects | select(.name == "'"Unraid $VERSION_ID"'") | .url')
         filename=$(basename "${url}")
         
-        echo -n "You are running Unraid ${VERSION_ID}. Downloading... "
+        # echo -n "You are running Unraid ${VERSION_ID}. Downloading... "
         [ -f $filename ] || wget $url
         echo "done."
         echo -n "Extracting Unraid... "
