@@ -7,7 +7,7 @@ jobs:
     permissions:
       contents: write
     container:
-      image: ghcr.io/ich777/unraid_kernel:gcc_11.2.0
+      image: bobbintb/unraid-cicd
       options: --privileged
     steps:
     - 
@@ -30,7 +30,10 @@ jobs:
     -
       name: Update slackpkg
       run: |
-       
+        slackpkg update || true
+        # slackpkg upgrade-all || true
+        slackpkg install make guile gc gcc kernel-headers binutils gettext pahole bc libbpf bison m4 squashfs || true
+        
         . /etc/os-release
         json=$(curl -s https://releases.unraid.net/usb-creator)
         url=$(echo "$json" | jq -r '.. | objects | select(.name == "'"Unraid $VERSION_ID"'") | .url')
