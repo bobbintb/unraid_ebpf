@@ -91,9 +91,9 @@ jobs:
             --enable CONFIG_IKCONFIG_PROC
         make -j$(nproc) oldconfig
         bzimagename=bzimage-${VERSION_ID}
-        make -j$(nproc) vmlinux
-        mv vmlinux ../vmlinux
+        # make -j$(nproc) vmlinux
         make -j$(nproc) bzImage
+        cp vmlinux ../vmlinux
         mv arch/x86/boot/bzImage ../$bzimagename
         cd ..
         slackpkg install llvm-13.0.0 <<< y
