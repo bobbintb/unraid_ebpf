@@ -108,7 +108,7 @@ jobs:
         mksquashfs modules ../bzmodules-${VERSION_ID}
         cd ..
         sha256sum bzmodules | cut -d " " -f 1 > bzmodules.sha256
-        cd vmlinux
+        cd linux
         
         cp vmlinux ../vmlinux
         mv arch/x86/boot/bzImage ../$bzimagename
