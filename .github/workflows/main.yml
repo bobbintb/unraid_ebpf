@@ -92,11 +92,12 @@ jobs:
         make -j$(nproc) oldconfig
         bzimagename=bzimage-${VERSION_ID}
         make -j$(nproc) vmlinux
-        llvm-objcopy --dump-section .BTF=vmlinux.btf vmlinux
-        cp vmlinux.btf ../vmlinux-${VERSION_ID}.btf
+        cp vmlinux ../vmlinux
         make -j$(nproc) bzImage
         mv arch/x86/boot/bzImage ../$bzimagename
         cd ..
+        llvm-objcopy --dump-section .BTF=vmlinux-${VERSION_ID}.btf vmlinux
+        rm vmlinux
         rm -dr ./linux/
         rm -dr ./unRAIDServer/
         rm unRAIDServer-*
