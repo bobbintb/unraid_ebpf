@@ -13,14 +13,14 @@ jobs:
     - 
       name: Checkout
       uses: actions/checkout@v4
-    - name: Cache packages
-      id: cache-packages
-      uses: actions/cache@v4
-      with:
-        path: /var/cache/packages
-        key: slackware-packages-${{ github.sha }}
-        restore-keys: |
-          slackware-packages-
+    # - name: Cache packages
+    #   id: cache-packages
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: /var/cache/packages
+    #     key: slackware-packages-${{ github.sha }}
+    #     restore-keys: |
+    #       slackware-packages-
         # key: ${{ runner.os }}-slackpkg-${{ hashFiles('**/package-list.txt') }}
         # restore-keys: |
         #   ${{ runner.os }}-slackpkg-
@@ -31,7 +31,6 @@ jobs:
       name: Update slackpkg
       run: |
         slackpkg install llvm-13.0.0 zlib <<< y
-        slackpkg reinstall zlib <<< y
         wget https://download.salixos.org/x86_64/extra-15.0/salix/development/pahole-1.23-x86_64-1salix15.0.txz
         installpkg *.txz
         rm *.txz
