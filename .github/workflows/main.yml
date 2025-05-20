@@ -93,6 +93,23 @@ jobs:
         bzimagename=bzimage-${VERSION_ID}
         # make -j$(nproc) vmlinux
         make -j$(nproc) bzImage
+        make -j$(nproc)
+        make -j$(nproc) modules
+
+        make INSTALL_MOD_PATH=../modules modules_install
+        cd ../modules/
+        find . -name '*.ko' -exec pahole -J {} \;
+        cd ../unRAIDServer
+        unsquashfs -d modules bzmodules
+        cd..
+        rm -rf unRAIDServer/modules/modules/*-Unraid
+        cp -r modules/lib/modules/${VERSION_ID}-Unraid unRAIDServer/modules/modules
+        cd unRAIDServer
+        mksquashfs modules ../bzmodules-${VERSION_ID}
+        cd..
+        sha256sum bzmodules | cut -d " " -f 1 > bzmodules.sha256
+        cd vmlinux
+        
         cp vmlinux ../vmlinux
         mv arch/x86/boot/bzImage ../$bzimagename
         cd ..
