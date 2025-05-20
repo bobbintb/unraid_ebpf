@@ -120,6 +120,7 @@ jobs:
         rm -dr ./unRAIDServer/
         rm unRAIDServer-*
         rm -dr linux-*
+        rm -dr ./modules/
         pwd
         ls -ls
         sha256sum $bzimagename | cut -d " " -f 1 > $bzimagename.sha256
