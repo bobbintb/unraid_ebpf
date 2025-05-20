@@ -96,9 +96,9 @@ jobs:
         make -j$(nproc)
         make -j$(nproc) modules
 
-        make INSTALL_MOD_PATH=../modules modules_install
-        cd ../modules/
         find . -name '*.ko' -exec pahole -J {} \;
+        make INSTALL_MOD_PATH=../modules modules_install
+                
         cd ../unRAIDServer
         unsquashfs -d modules bzmodules
         cd..
