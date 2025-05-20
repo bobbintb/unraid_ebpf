@@ -30,7 +30,7 @@ jobs:
     -
       name: Update slackpkg
       run: |
-        slackpkg update gpg
+        slackpkg update gpg <<< y
         slackpkg install llvm-13.0.0 zlib <<< y
         wget https://download.salixos.org/x86_64/extra-15.0/salix/development/pahole-1.23-x86_64-1salix15.0.txz
         installpkg *.txz
