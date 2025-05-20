@@ -106,7 +106,7 @@ jobs:
         cp -r modules/lib/modules/${KERNEL_VERSION}-Unraid unRAIDServer/modules/modules
         cd unRAIDServer
         mksquashfs modules ../bzmodules-${VERSION_ID}
-        cd..
+        cd ..
         sha256sum bzmodules | cut -d " " -f 1 > bzmodules.sha256
         cd vmlinux
         
