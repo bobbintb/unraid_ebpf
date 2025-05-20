@@ -101,9 +101,9 @@ jobs:
                 
         cd ../unRAIDServer
         unsquashfs -d modules bzmodules
-        cd..
+        cd ..
         rm -rf unRAIDServer/modules/modules/*-Unraid
-        cp -r modules/lib/modules/${VERSION_ID}-Unraid unRAIDServer/modules/modules
+        cp -r modules/lib/modules/${KERNEL_VERSION}-Unraid unRAIDServer/modules/modules
         cd unRAIDServer
         mksquashfs modules ../bzmodules-${VERSION_ID}
         cd..
