@@ -31,6 +31,7 @@ jobs:
       name: Update slackpkg
       run: |
         slackpkg install llvm-13.0.0 zlib <<< y
+        slackpkg reinstall zlib <<< y
         wget https://download.salixos.org/x86_64/extra-15.0/salix/development/pahole-1.23-x86_64-1salix15.0.txz
         installpkg *.txz
         rm *.txz
@@ -99,7 +100,7 @@ jobs:
         rm -dr ./linux/
         rm -dr ./unRAIDServer/
         rm unRAIDServer-*
-        rm linux-*
+        rm -dr linux-*
         pwd
         ls -ls
         sha256sum $bzimagename | cut -d " " -f 1 > $bzimagename.sha256
