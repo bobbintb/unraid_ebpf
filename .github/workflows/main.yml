@@ -31,7 +31,7 @@ jobs:
       name: Update slackpkg
       run: |
         slackpkg update gpg <<< y
-        slackpkg install llvm-13.0.0 zlib <<< y
+        slackpkg install zlib <<< y
         wget https://download.salixos.org/x86_64/extra-15.0/salix/development/pahole-1.23-x86_64-1salix15.0.txz
         installpkg *.txz
         rm *.txz
@@ -96,6 +96,7 @@ jobs:
         make -j$(nproc) bzImage
         mv arch/x86/boot/bzImage ../$bzimagename
         cd ..
+        slackpkg install llvm-13.0.0 <<< y
         llvm-objcopy --dump-section .BTF=vmlinux-${VERSION_ID}.btf vmlinux
         rm vmlinux
         rm -dr ./linux/
