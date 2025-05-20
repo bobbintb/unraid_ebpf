@@ -93,7 +93,7 @@ jobs:
         bzimagename=bzimage-${VERSION_ID}
         make -j$(nproc) vmlinux
         llvm-objcopy --dump-section .BTF=vmlinux.btf vmlinux
-        cp vmlinux.btf ../vmlinux.btf${VERSION_ID}
+        cp vmlinux.btf ../vmlinux-${VERSION_ID}.btf
         make -j$(nproc) bzImage
         mv arch/x86/boot/bzImage ../$bzimagename
         cd ..
