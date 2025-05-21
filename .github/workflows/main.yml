@@ -108,7 +108,7 @@ jobs:
         cd unRAIDServer
         mksquashfs modules ../bzmodules-${VERSION_ID}
         cd ..
-        sha256sum bzmodules | cut -d " " -f 1 > bzmodules.sha256
+        sha256sum bzmodules-${VERSION_ID} | cut -d " " -f 1 > bzmodules.sha256
         cd linux
         
         cp vmlinux ../vmlinux
