@@ -91,13 +91,11 @@ jobs:
             --enable CONFIG_IKCONFIG_PROC
         make -j$(nproc) oldconfig
         bzimagename=bzimage-${VERSION_ID}
-        # make -j$(nproc) vmlinux
         make -j$(nproc) bzImage
         make -j$(nproc)
-        make -j$(nproc) INSTALL_MOD_STRIP=1 modules
-
-        # find . -name '*.ko' -exec pahole -J {} \;
-        make INSTALL_MOD_PATH=../modules modules_install
+        make -j$(nproc) modules
+        make INSTALL_MOD_PATH=../modules INSTALL_MOD_STRIP=1 modules_install
+        find ../modules -name '*.ko' -exec pahole --btf_encode --skip_other {} \;
         depmod -b ../modules
                 
         cd ../unRAIDServer
