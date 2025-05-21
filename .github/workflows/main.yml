@@ -98,7 +98,7 @@ jobs:
 
         # find . -name '*.ko' -exec pahole -J {} \;
         make INSTALL_MOD_PATH=../modules modules_install
-        depmod
+        depmod -b ../modules
                 
         cd ../unRAIDServer
         unsquashfs -d modules bzmodules
