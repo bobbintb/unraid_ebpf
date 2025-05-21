@@ -34,7 +34,7 @@ jobs:
         alias wget='wget -q --show-progress'
         sed -i 's/^#*\s*BATCH=.*/BATCH=on/' /etc/slackpkg/slackpkg.conf
         sed -i 's/^#*\s*DEFAULT_ANSWER=.*/DEFAULT_ANSWER=y/' /etc/slackpkg/slackpkg.conf
-        slackinstall() { slackpkg "$@" 2>&1 | grep -E 'Installing package|Package .* installed\.'; }
+        slackpkg() { slackpkg "$@" 2>&1 | grep -E 'Installing package|Package .* installed\.'; }
         
         echo "Installing needed packages..."
         slackpkg update gpg <<< y
