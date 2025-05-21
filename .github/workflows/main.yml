@@ -37,6 +37,9 @@ jobs:
         slackpkg() {
           command slackpkg "$@" <<< y 2>&1 | grep -E 'Installing package|GPG key added|Package .* installed\.'
         }
+        installpkg() {
+          command installpkg "$@" 2>&1 | grep -E 'Installing package|Package .* installed\.'
+        }
         gecho "Processors detected: $(nproc)"
 
         gecho "Installing needed packages..."
@@ -125,7 +128,7 @@ jobs:
         make INSTALL_MOD_PATH=../modules INSTALL_MOD_STRIP=1 modules_install > /dev/null
         find ../modules -name '*.ko' -exec pahole --btf_encode --skip_other {} \;
         cd ..
-        depmod -b ../modules
+        depmod -b modules
         gecho "done."
 
         gecho "Creating bzmodules... "
