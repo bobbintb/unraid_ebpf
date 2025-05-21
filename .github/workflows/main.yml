@@ -51,7 +51,7 @@ jobs:
         filename=$(basename "${url}")
         name=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].name')
         VERSION_ID=$(echo $name | sed 's/^Unraid //')
-        echo -n "Downloading version ${VERSION_ID}... "
+        echo -n "Downloading ${VERSION_ID}... "
         [ -f $filename ] || wget $url
         echo "done."
         
@@ -110,15 +110,23 @@ jobs:
 
         echo -n "Making bzImage... "
         bzimagename=bzimage-${VERSION_ID}
-        make -j$(nproc) bzImage 2>&1 | grep -E "error:|warning:"
+        make -j$(nproc) bzImage > /dev/null
+        mv arch/x86/boot/bzImage ../$bzimagename
+        sha256sum ../$bzimagename | cut -d " " -f 1 > ../$bzimagename.sha256
         echo "done."
 
-        make -j$(nproc)
-        make -j$(nproc) modules
-        make INSTALL_MOD_PATH=../modules INSTALL_MOD_STRIP=1 modules_install
+        echo -n "Making... "
+        make -j$(nproc) > /dev/null
+        echo "done."
+        
+        echo -n "Making modules... "
+        make -j$(nproc) modules > /dev/null
+        make INSTALL_MOD_PATH=../modules INSTALL_MOD_STRIP=1 modules_install > /dev/null
         find ../modules -name '*.ko' -exec pahole --btf_encode --skip_other {} \;
         depmod -b ../modules
-                
+        echo "done."
+
+        echo -n "Creating bzmodules... "
         cd ../unRAIDServer
         unsquashfs -d modules bzmodules
         cd ..
@@ -128,22 +136,25 @@ jobs:
         mksquashfs modules ../bzmodules-${VERSION_ID}
         cd ..
         sha256sum bzmodules-${VERSION_ID} | cut -d " " -f 1 > bzmodules-${VERSION_ID}.sha256
+        echo "done."
+
+        echo -n "Extractiong BTF... "
         cd linux
-        
         cp vmlinux ../vmlinux
-        mv arch/x86/boot/bzImage ../$bzimagename
         cd ..
         slackpkg install llvm-13.0.0
         llvm-objcopy --dump-section .BTF=vmlinux-${VERSION_ID}.btf vmlinux
+        echo "done."
+
+        echo -n "Cleaning up... "
         rm vmlinux
         rm -dr ./linux/
         rm -dr ./unRAIDServer/
         rm unRAIDServer-*
         rm -dr linux-*
         rm -dr ./modules/
-        pwd
-        ls -ls
-        sha256sum $bzimagename | cut -d " " -f 1 > $bzimagename.sha256
+        echo "done."
+        
         REPO=${GITHUB_REPOSITORY##*/}
         REPO_DIR="/__w/${REPO}/${REPO}"
         git config --global --add safe.directory $REPO_DIR
