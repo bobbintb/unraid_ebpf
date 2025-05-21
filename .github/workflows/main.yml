@@ -30,7 +30,7 @@ jobs:
     -
       name: Update slackpkg
       run: |
-        echo() { builtin echo -e "\033[0;32m$*\033[0m"; }
+        cecho() { printf '\033[0;32m'; command echo "$@"; printf '\033[0m'; }
         alias wget='wget -q'
         sed -i 's/^#*\s*BATCH=.*/BATCH=on/' /etc/slackpkg/slackpkg.conf
         sed -i 's/^#*\s*DEFAULT_ANSWER=.*/DEFAULT_ANSWER=y/' /etc/slackpkg/slackpkg.conf
@@ -38,7 +38,7 @@ jobs:
           command slackpkg "$@" <<< y 2>&1 | grep -E 'Installing package|GPG key added|Package .* installed\.'
         }
 
-        echo "Installing needed packages..."
+        cecho "Installing needed packages..."
         slackpkg update gpg <<< y
         slackpkg install zlib
         wget https://download.salixos.org/x86_64/extra-15.0/salix/development/pahole-1.23-x86_64-1salix15.0.txz
@@ -46,46 +46,46 @@ jobs:
         installpkg *.txz
         rm *.txz
 
-        echo "Finding latest unRaid version..."
+        cecho "Finding latest unRaid version..."
         url=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].url')
         filename=$(basename "${url}")
         name=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].name')
         VERSION_ID=$(echo $name | sed 's/^Unraid //')
-        echo "Downloading ${VERSION_ID}... "
+        cecho "Downloading ${VERSION_ID}... "
         [ -f $filename ] || wget $url
-        echo "done."
+        cecho "done."
         
-        echo "Extracting Unraid... "
+        cecho "Extracting Unraid... "
         unzip -o -q $filename -d unRAIDServer
-        echo "done."
+        cecho "done."
         
-        echo "Determining kernel version needed for Unraid... "
+        cecho "Determining kernel version needed for Unraid... "
         cd unRAIDServer    
         KERNEL_VERSION=$(file bzimage | awk -F'version ' '{print $2}' | cut -d' ' -f1 | cut -d'-' -f1)
         MAJOR_VERSION=${KERNEL_VERSION%%.*}
-        echo "Downloading Linux kernel ${KERNEL_VERSION}... "
+        cecho "Downloading Linux kernel ${KERNEL_VERSION}... "
         cd ..
         [ -f linux-${KERNEL_VERSION}.tar.xz ] || wget https://cdn.kernel.org/pub/linux/kernel/v${MAJOR_VERSION}.x/linux-${KERNEL_VERSION}.tar.xz
-        echo "done."
+        cecho "done."
 
-        echo "Extracting Linux kernel... "
+        cecho "Extracting Linux kernel... "
         mkdir -p linux
         tar xf linux-${KERNEL_VERSION}.tar.xz -C linux --strip-components 1
-        echo "done."
+        cecho "done."
 
-        echo "Copying patches... "
+        cecho "Copying patches... "
         cd unRAIDServer
         unsquashfs -d patches bzfirmware src
         cd ..
         cp -r unRAIDServer/patches/src/linux-*-Unraid/. linux/
-        echo "done."
+        cecho "done."
 
-        echo "Applying patches... "
+        cecho "Applying patches... "
         cd linux
         find . -type f -iname '*.patch' -print0 | xargs -n1 -0 patch -p1 -i
-        echo "done."
+        cecho "done."
 
-        echo "Applying kernel config... "
+        cecho "Applying kernel config... "
         ./scripts/config --enable CONFIG_MD_UNRAID \
             --enable CONFIG_DEBUG_INFO \
             --disable CONFIG_DEBUG_INFO_NONE \
@@ -106,27 +106,27 @@ jobs:
             --enable CONFIG_IKCONFIG \
             --enable CONFIG_IKCONFIG_PROC
         make -j$(nproc) oldconfig
-        echo "done."
+        cecho "done."
 
-        echo "Making bzImage... "
+        cecho "Making bzImage... "
         bzimagename=bzimage-${VERSION_ID}
         make -j$(nproc) bzImage > /dev/null
         mv arch/x86/boot/bzImage ../$bzimagename
         sha256sum ../$bzimagename | cut -d " " -f 1 > ../$bzimagename.sha256
-        echo "done."
+        cecho "done."
 
-        echo "Making... "
+        cecho "Making... "
         make -j$(nproc) > /dev/null
-        echo "done."
+        cecho "done."
         
-        echo "Making modules... "
+        cecho "Making modules... "
         make -j$(nproc) modules > /dev/null
         make INSTALL_MOD_PATH=../modules INSTALL_MOD_STRIP=1 modules_install > /dev/null
         find ../modules -name '*.ko' -exec pahole --btf_encode --skip_other {} \;
         depmod -b ../modules
-        echo "done."
+        cecho "done."
 
-        echo "Creating bzmodules... "
+        cecho "Creating bzmodules... "
         cd ../unRAIDServer
         unsquashfs -d modules bzmodules
         cd ..
@@ -136,24 +136,24 @@ jobs:
         mksquashfs modules ../bzmodules-${VERSION_ID}
         cd ..
         sha256sum bzmodules-${VERSION_ID} | cut -d " " -f 1 > bzmodules-${VERSION_ID}.sha256
-        echo "done."
+        cecho "done."
 
-        echo "Extractiong BTF... "
+        cecho "Extractiong BTF... "
         cd linux
         cp vmlinux ../vmlinux
         cd ..
         slackpkg install llvm-13.0.0
         llvm-objcopy --dump-section .BTF=vmlinux-${VERSION_ID}.btf vmlinux
-        echo "done."
+        cecho "done."
 
-        echo "Cleaning up... "
+        cecho "Cleaning up... "
         rm vmlinux
         rm -dr ./linux/
         rm -dr ./unRAIDServer/
         rm unRAIDServer-*
         rm -dr linux-*
         rm -dr ./modules/
-        echo "done."
+        cecho "done."
         
         REPO=${GITHUB_REPOSITORY##*/}
         REPO_DIR="/__w/${REPO}/${REPO}"
