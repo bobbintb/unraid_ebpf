@@ -31,11 +31,13 @@ jobs:
       name: Update slackpkg
       run: |
         echo() { printf '\033[0;32m'; command echo "$@"; printf '\033[0m'; }
-        alias wget='wget -q --show-progress'
+        alias wget='wget -q'
         sed -i 's/^#*\s*BATCH=.*/BATCH=on/' /etc/slackpkg/slackpkg.conf
         sed -i 's/^#*\s*DEFAULT_ANSWER=.*/DEFAULT_ANSWER=y/' /etc/slackpkg/slackpkg.conf
-        slackpkg() { slackpkg "$@" 2>&1 | grep -E 'Installing package|Package .* installed\.'; }
-        
+        slackpkg() {
+          command slackpkg "$@" <<< y 2>&1 | grep -E 'Installing package|GPG key added|Package .* installed\.'
+        }
+
         echo "Installing needed packages..."
         slackpkg update gpg <<< y
         slackpkg install zlib
