@@ -129,7 +129,7 @@ jobs:
         make INSTALL_MOD_PATH=../modules INSTALL_MOD_STRIP=1 modules_install > /dev/null
         find ../modules -name '*.ko' -exec pahole --btf_encode --skip_other {} \;
         cd ..
-        depmod -b modules
+        depmod -b modules ${KERNEL_VERSION}-Unraid
         gecho "done."
 
         gecho "Creating bzmodules... "
