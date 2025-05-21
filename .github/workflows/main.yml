@@ -94,10 +94,11 @@ jobs:
         # make -j$(nproc) vmlinux
         make -j$(nproc) bzImage
         make -j$(nproc)
-        make -j$(nproc) modules
+        make -j$(nproc) INSTALL_MOD_STRIP=1 modules
 
-        find . -name '*.ko' -exec pahole -J {} \;
+        # find . -name '*.ko' -exec pahole -J {} \;
         make INSTALL_MOD_PATH=../modules modules_install
+        depmod
                 
         cd ../unRAIDServer
         unsquashfs -d modules bzmodules
