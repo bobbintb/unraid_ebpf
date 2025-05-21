@@ -41,6 +41,7 @@ jobs:
           command installpkg "$@" 2>&1 | grep -E 'Installing package|Package .* installed\.'
         }
         gecho "Processors detected: $(nproc)"
+        gecho $(uname -r)
 
         gecho "Installing needed packages..."
         slackpkg update gpg <<< y
