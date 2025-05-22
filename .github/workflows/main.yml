@@ -160,7 +160,8 @@ jobs:
         rm -dr linux-*
         rm -dr ./modules/
         gecho "done."
-        
+
+        git lfs track "bzmodules-${VERSION_ID}"
         REPO=${GITHUB_REPOSITORY##*/}
         REPO_DIR="/__w/${REPO}/${REPO}"
         git config --global --add safe.directory $REPO_DIR
