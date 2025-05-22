@@ -47,7 +47,7 @@ jobs:
         slackpkg update gpg <<< y
         slackpkg install zlib
         wget https://download.salixos.org/x86_64/extra-15.0/salix/development/pahole-1.23-x86_64-1salix15.0.txz
-        wget https://slackers.it/repository/slackware64-current/git-lfs/git-lfs-3.6.1-x86_64-2cf.txz
+        # wget https://slackers.it/repository/slackware64-current/git-lfs/git-lfs-3.6.1-x86_64-2cf.txz
         installpkg *.txz
         rm *.txz
 
@@ -163,7 +163,7 @@ jobs:
         rm -dr ./modules/
         gecho "done."
 
-        git lfs track "bzmodules-${VERSION_ID}"
+        # git lfs track "bzmodules-${VERSION_ID}"
         REPO=${GITHUB_REPOSITORY##*/}
         REPO_DIR="/__w/${REPO}/${REPO}"
         git config --global --add safe.directory $REPO_DIR
