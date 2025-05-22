@@ -142,6 +142,8 @@ jobs:
         mksquashfs modules ../bzmodules-${VERSION_ID}
         cd ..
         sha256sum bzmodules-${VERSION_ID} | cut -d " " -f 1 > bzmodules-${VERSION_ID}.sha256
+        split -b 100M --numeric-suffixes=1 bzmodules-${VERSION_ID} bzmodules-${VERSION_ID}.part.
+        rm bzmodules-${VERSION_ID}
         gecho "done."
 
         gecho "Extracting BTF... "
