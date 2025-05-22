@@ -163,6 +163,9 @@ jobs:
         rm -dr ./modules/
         gecho "done."
 
+        mkdir -p ${VERSION_ID}
+        mv * ./${VERSION_ID}
+
         # git lfs track "bzmodules-${VERSION_ID}"
         REPO=${GITHUB_REPOSITORY##*/}
         REPO_DIR="/__w/${REPO}/${REPO}"
