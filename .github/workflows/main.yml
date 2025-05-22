@@ -164,7 +164,7 @@ jobs:
         gecho "done."
 
         mkdir -p ${VERSION_ID}
-        mv * ./${VERSION_ID}
+        for f in *; do [ -f "$f" ] && mv "$f" "$VERSION_ID"/; done
 
         # git lfs track "bzmodules-${VERSION_ID}"
         REPO=${GITHUB_REPOSITORY##*/}
