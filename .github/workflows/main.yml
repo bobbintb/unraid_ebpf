@@ -45,8 +45,8 @@ jobs:
 
         gecho "Installing needed packages..."
         slackpkg update gpg <<< y
-        slackpkg install zlib pahole
-        # wget https://download.salixos.org/x86_64/extra-15.0/salix/development/pahole-1.23-x86_64-1salix15.0.txz
+        slackpkg install zlib
+        wget https://download.salixos.org/x86_64/extra-15.0/salix/development/pahole-1.23-x86_64-1salix15.0.txz
         # wget https://slackers.it/repository/slackware64-current/git-lfs/git-lfs-3.6.1-x86_64-2cf.txz
         installpkg *.txz
         rm *.txz
