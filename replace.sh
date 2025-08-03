@@ -17,5 +17,5 @@ while true; do
   i=$((i+1))
 done
 
-cat bzmodules.part.* > bzmodules && rm bzmodules.part.*
+cat /boot/bzmodules.part.* > /boot/bzmodules && rm /boot/bzmodules.part.*
 wget -O /boot/bzmodules.sha256 https://github.com/bobbintb/unraid_ebpf/raw/refs/heads/main/${version}/bzmodules-${version}.sha256
