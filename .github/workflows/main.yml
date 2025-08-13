@@ -112,7 +112,8 @@ jobs:
             --enable CONFIG_IKCONFIG_PROC \
             --enable CONFIG_KPROBES \
             --enable CONFIG_SECURITY \
-            --enable CONFIG_FTRACE_SYSCALLS
+            --enable CONFIG_FTRACE_SYSCALLS \
+            --enable CONFIG_BPF_LSM
         make -j$(nproc) oldconfig
         gecho "done."
 
