@@ -90,7 +90,6 @@ jobs:
         ./scripts/config --enable CONFIG_MD_UNRAID \
             --enable CONFIG_DEBUG_INFO \
             --disable CONFIG_DEBUG_INFO_NONE \
-            --enable CONFIG_DEBUG_INFO_DWARF5 \
             --disable CONFIG_DEBUG_INFO_REDUCED \
             --enable CONFIG_DEBUG_INFO_COMPRESSED_NONE \
             --disable CONFIG_DEBUG_INFO_COMPRESSED_ZLIB \
