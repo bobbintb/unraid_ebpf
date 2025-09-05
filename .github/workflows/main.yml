@@ -23,9 +23,8 @@ jobs:
         
           gecho() { printf '\033[0;32m'; command echo "$@"; printf '\033[0m'; }
           alias wget='wget -q'
-          slackpkg() {
-          command slackpkg "$@" <<< y 2>&1 | grep -E 'Installing package|GPG key added|Package .* installed\.'
-          
+          slackpkginstall() {
+          command slackpkg install "$@" <<< y 2>&1 | grep -E 'Installing package|GPG key added|Package .* installed\.'
         }
         EOF
     -
@@ -129,7 +128,7 @@ jobs:
             --enable CONFIG_BPF_EVENTS \
             --enable CONFIG_SECURITYFS \
             --enable CONFIG_BPF_JIT
-            make -j$(nproc) oldconfig
+            make -j$(nproc) olddefconfig
         gecho "done."
     -
       name: Build
