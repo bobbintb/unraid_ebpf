@@ -17,10 +17,10 @@ jobs:
         # Environment variables (persist via $GITHUB_ENV)
         # echo "MYVAR=hello" >> $GITHUB_ENV
         # echo "FOO=bar" >> $GITHUB_ENV
+        echo "pwd"
+        pwd
 
         # Aliases & functions (persist via $BASH_ENV)
-        echo "testing"
-        cat /etc/profile
         cat >>"/etc/profile" <<'EOF'
           gecho() { printf '\033[0;32m'; command echo "$@"; printf '\033[0m'; }
           alias wget='wget -q'
@@ -28,7 +28,6 @@ jobs:
           command slackpkg "$@" <<< y 2>&1 | grep -E 'Installing package|GPG key added|Package .* installed\.'
         }
         EOF
-        cat /etc/profile
     -
       name: Update slackpkg
       run: |
