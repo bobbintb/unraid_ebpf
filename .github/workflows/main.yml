@@ -34,18 +34,19 @@ jobs:
         alias wget='wget -q'
         sed -i 's/^#*\s*BATCH=.*/BATCH=on/' /etc/slackpkg/slackpkg.conf
         sed -i 's/^#*\s*DEFAULT_ANSWER=.*/DEFAULT_ANSWER=y/' /etc/slackpkg/slackpkg.conf
-        slackpkg() {
-          command slackpkg "$@" <<< y 2>&1 | grep -E 'Installing package|GPG key added|Package .* installed\.'
-        }
-        installpkg() {
-          command installpkg "$@" 2>&1 | grep -E 'Installing package|Package .* installed\.'
-        }
+        
         gecho "Processors detected: $(nproc)"
         gecho $(uname -r)
 
         gecho "Installing needed packages..."
         slackpkg update gpg <<< y
         slackpkg update
+        slackpkg() {
+          command slackpkg "$@" <<< y 2>&1 | grep -E 'Installing package|GPG key added|Package .* installed\.'
+        }
+        installpkg() {
+          command installpkg "$@" 2>&1 | grep -E 'Installing package|Package .* installed\.'
+        }
         slackpkg install zlib pahole
 
         gecho "Finding latest unRaid version..."
