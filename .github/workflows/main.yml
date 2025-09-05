@@ -28,6 +28,7 @@ jobs:
           command slackpkg "$@" <<< y 2>&1 | grep -E 'Installing package|GPG key added|Package .* installed\.'
         }
         EOF
+        cat /etc/profile
     -
       name: Update slackpkg
       run: |
