@@ -34,24 +34,22 @@ jobs:
         alias wget='wget -q'
         sed -i 's/^#*\s*BATCH=.*/BATCH=on/' /etc/slackpkg/slackpkg.conf
         sed -i 's/^#*\s*DEFAULT_ANSWER=.*/DEFAULT_ANSWER=y/' /etc/slackpkg/slackpkg.conf
-        echo "https://ftp.osuosl.org/pub/slackware/slackware64-current/" >> /etc/slackpkg/mirrors
         slackpkg() {
-          command slackpkg "$@" <<< y 2>&1 | \
-            grep -E 'Installing package|GPG key added|Package .* installed' || true
+          command slackpkg "$@" <<< y 2>&1 | grep -E 'Installing package|GPG key added|Package .* installed\.'
         }
-        
         installpkg() {
-          command installpkg "$@" 2>&1 | \
-            grep -E 'Installing package|Package .* installed' || true
+          command installpkg "$@" 2>&1 | grep -E 'Installing package|Package .* installed\.'
         }
-
         gecho "Processors detected: $(nproc)"
         gecho $(uname -r)
 
         gecho "Installing needed packages..."
         slackpkg update gpg <<< y
-        slackpkg update
-        slackpkg install zlib pahole
+        slackpkg install zlib
+        wget http://ftp.osuosl.org/pub/slackware/slackware64-current/slackware64/d/pahole-1.30-x86_64-1.txz
+        # wget https://slackers.it/repository/slackware64-current/git-lfs/git-lfs-3.6.1-x86_64-2cf.txz
+        installpkg *.txz
+        rm *.txz
 
         gecho "Finding latest unRaid version..."
         url=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].url')
@@ -96,8 +94,8 @@ jobs:
         ./scripts/config --enable CONFIG_MD_UNRAID \
             --enable CONFIG_DEBUG_INFO \
             --disable CONFIG_DEBUG_INFO_NONE \
+            --enable CONFIG_DEBUG_INFO_DWARF5 \
             --disable CONFIG_DEBUG_INFO_REDUCED \
-            --enable CONFIG_DEBUG_INFO_DWARF4 \
             --enable CONFIG_DEBUG_INFO_COMPRESSED_NONE \
             --disable CONFIG_DEBUG_INFO_COMPRESSED_ZLIB \
             --disable CONFIG_DEBUG_INFO_COMPRESSED_ZSTD \
