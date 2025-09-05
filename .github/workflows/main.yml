@@ -45,6 +45,7 @@ jobs:
 
         gecho "Installing needed packages..."
         slackpkg update gpg <<< y
+        slackpkg update
         slackpkg install zlib pahole
 
         gecho "Finding latest unRaid version..."
