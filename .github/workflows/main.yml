@@ -12,7 +12,7 @@ jobs:
     steps:
     -
       # Bootstrap step – define env vars, aliases, functions once
-      name: Setup environment
+      name: Bootstrp environment
       run: |
         # Environment variables (persist via $GITHUB_ENV)
         # echo "MYVAR=hello" >> $GITHUB_ENV
@@ -36,7 +36,7 @@ jobs:
         sed -i 's/^#*\s*DEFAULT_ANSWER=.*/DEFAULT_ANSWER=y/' /etc/slackpkg/slackpkg.conf
         gecho "Installing needed packages..."
         slackpkg update gpg <<< y
-        slackpkg install zlib nghttp3 pahole
+        slackpkg install zlib nghttp3 pahole llvm-13.0.0
     - 
       name: Checkout
       uses: actions/checkout@v4
@@ -57,9 +57,7 @@ jobs:
     -
       name: Download unRaid
       run: |
-        gecho "Processors detected: $(nproc)"
-        gecho $(uname -r)
-
+        . ./bootstrap
         gecho "Finding latest unRaid version..."
         url=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].url')
         filename=$(basename "${url}")
@@ -68,11 +66,13 @@ jobs:
         gecho "Downloading ${VERSION_ID}... "
         [ -f $filename ] || wget $url
         gecho "done."
-        
         gecho "Extracting Unraid... "
         unzip -o -q $filename -d unRAIDServer
         gecho "done."
-        
+    -
+      name: Download Linux kernel
+      run: |
+        . ./bootstrap
         gecho "Determining kernel version needed for Unraid... "
         cd unRAIDServer    
         KERNEL_VERSION=$(file bzimage | awk -F'version ' '{print $2}' | cut -d' ' -f1 | cut -d'-' -f1)
@@ -81,19 +81,20 @@ jobs:
         cd ..
         [ -f linux-${KERNEL_VERSION}.tar.xz ] || wget https://cdn.kernel.org/pub/linux/kernel/v${MAJOR_VERSION}.x/linux-${KERNEL_VERSION}.tar.xz
         gecho "done."
-
         gecho "Extracting Linux kernel... "
         mkdir -p linux
         tar xf linux-${KERNEL_VERSION}.tar.xz -C linux --strip-components 1
         gecho "done."
-
+    -
+      name: Patch kernel
+      run: |
+        . ./bootstrap
         gecho "Copying patches... "
         cd unRAIDServer
         unsquashfs -d patches bzfirmware src
         cd ..
         cp -r unRAIDServer/patches/src/linux-*-Unraid/. linux/
         gecho "done."
-
         gecho "Applying patches... "
         cd linux
         find . -type f -iname '*.patch' -print0 | xargs -n1 -0 patch -p1 -i
@@ -130,7 +131,11 @@ jobs:
             --enable CONFIG_BPF_JIT
             make -j$(nproc) oldconfig
         gecho "done."
-
+    -
+      name: Build
+      run: |
+        . ./bootstrap
+        cd linux
         gecho "Making bzImage... "
         bzimagename=bzimage-${VERSION_ID}
         make -j$(nproc) bzImage > /dev/null
@@ -169,7 +174,6 @@ jobs:
         cd linux
         cp vmlinux ../vmlinux
         cd ..
-        slackpkg install llvm-13.0.0
         llvm-objcopy --dump-section .BTF=vmlinux-${VERSION_ID}.btf vmlinux
         gecho "done."
 
