@@ -47,7 +47,8 @@ jobs:
         installpkg() {
           command installpkg "$@" 2>&1 | grep -E 'Installing package|Package .* installed\.'
         }
-        slackpkg install zlib pahole
+        slackpkg install zlib
+        slackpkg install pahole
 
         gecho "Finding latest unRaid version..."
         url=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].url')
