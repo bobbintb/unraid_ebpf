@@ -7,7 +7,7 @@ jobs:
     permissions:
       contents: write
     container:
-      image: ghcr.io/ich777/unraid_kernel:gcc_11.2.0
+      image: ghcr.io/ich777/unraid_kernel:gcc_14.2.0
       options: --privileged
     steps:
     - 
