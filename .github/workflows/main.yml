@@ -12,14 +12,14 @@ jobs:
     steps:
     -
       # Bootstrap step – define env vars, aliases, functions once
-      name: Bootstrp environment
+      name: Bootstrap environment
       run: |
         # Environment variables (persist via $GITHUB_ENV)
         # echo "MYVAR=hello" >> $GITHUB_ENV
         # echo "FOO=bar" >> $GITHUB_ENV
 
         # Aliases & functions (persist via $BASH_ENV)
-        cat >>"bootstrap" <<'EOF'
+        cat >>"/etc/bootstrap" <<'EOF'
         
           gecho() { printf '\033[0;32m'; command echo "$@"; printf '\033[0m'; }
           alias wget='wget -q'
@@ -31,7 +31,7 @@ jobs:
     -
       name: Update slackpkg
       run: |
-        . ./bootstrap
+        . /etc/bootstrap
         sed -i 's/^#*\s*BATCH=.*/BATCH=on/' /etc/slackpkg/slackpkg.conf
         sed -i 's/^#*\s*DEFAULT_ANSWER=.*/DEFAULT_ANSWER=y/' /etc/slackpkg/slackpkg.conf
         gecho "Installing needed packages..."
@@ -57,7 +57,7 @@ jobs:
     -
       name: Download unRaid
       run: |
-        . ./bootstrap
+        . /etc/bootstrap
         gecho "Finding latest unRaid version..."
         url=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].url')
         filename=$(basename "${url}")
@@ -72,7 +72,7 @@ jobs:
     -
       name: Download Linux kernel
       run: |
-        . ./bootstrap
+        . /etc/bootstrap
         gecho "Determining kernel version needed for Unraid... "
         cd unRAIDServer    
         KERNEL_VERSION=$(file bzimage | awk -F'version ' '{print $2}' | cut -d' ' -f1 | cut -d'-' -f1)
@@ -88,7 +88,7 @@ jobs:
     -
       name: Patch kernel
       run: |
-        . ./bootstrap
+        . /etc/bootstrap
         gecho "Copying patches... "
         cd unRAIDServer
         unsquashfs -d patches bzfirmware src
@@ -134,7 +134,7 @@ jobs:
     -
       name: Build
       run: |
-        . ./bootstrap
+        . /etc/bootstrap
         cd linux
         gecho "Making bzImage... "
         bzimagename=bzimage-${VERSION_ID}
