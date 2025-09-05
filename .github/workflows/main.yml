@@ -21,7 +21,7 @@ jobs:
         pwd
 
         # Aliases & functions (persist via $BASH_ENV)
-        cat >>"/etc/profile" <<'EOF'
+        cat >>"bootstrap" <<'EOF'
           gecho() { printf '\033[0;32m'; command echo "$@"; printf '\033[0m'; }
           alias wget='wget -q'
           slackpkg() {
@@ -31,6 +31,7 @@ jobs:
     -
       name: Update slackpkg
       run: |
+        . bootstrap
         sed -i 's/^#*\s*BATCH=.*/BATCH=on/' /etc/slackpkg/slackpkg.conf
         sed -i 's/^#*\s*DEFAULT_ANSWER=.*/DEFAULT_ANSWER=y/' /etc/slackpkg/slackpkg.conf
         gecho "Installing needed packages..."
