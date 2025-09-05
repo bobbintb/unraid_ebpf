@@ -19,6 +19,8 @@ jobs:
         # echo "FOO=bar" >> $GITHUB_ENV
 
         # Aliases & functions (persist via $BASH_ENV)
+        echo "testing"
+        cat /etc/profile
         cat >>"/etc/profile" <<'EOF'
           gecho() { printf '\033[0;32m'; command echo "$@"; printf '\033[0m'; }
           alias wget='wget -q'
