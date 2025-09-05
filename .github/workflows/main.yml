@@ -10,6 +10,30 @@ jobs:
       image: ghcr.io/ich777/unraid_kernel:gcc_14.2.0
       options: --privileged
     steps:
+    -
+      # Bootstrap step – define env vars, aliases, functions once
+      name: Setup environment
+      run: |
+        # Environment variables (persist via $GITHUB_ENV)
+        # echo "MYVAR=hello" >> $GITHUB_ENV
+        # echo "FOO=bar" >> $GITHUB_ENV
+
+        # Aliases & functions (persist via $BASH_ENV)
+        cat >>"$BASH_ENV" <<'EOF'
+          gecho() { printf '\033[0;32m'; command echo "$@"; printf '\033[0m'; }
+          alias wget='wget -q'
+          slackpkg() {
+          command slackpkg "$@" <<< y 2>&1 | grep -E 'Installing package|GPG key added|Package .* installed\.'
+        }
+        EOF
+    -
+      name: Update slackpkg
+      run: |
+        sed -i 's/^#*\s*BATCH=.*/BATCH=on/' /etc/slackpkg/slackpkg.conf
+        sed -i 's/^#*\s*DEFAULT_ANSWER=.*/DEFAULT_ANSWER=y/' /etc/slackpkg/slackpkg.conf
+        gecho "Installing needed packages..."
+        slackpkg update gpg <<< y
+        slackpkg install zlib nghttp3 pahole
     - 
       name: Checkout
       uses: actions/checkout@v4
@@ -28,28 +52,10 @@ jobs:
         #restore-keys: |
         #  slackpkg-${{ runner.os }}-${{ inputs.VERSION }}-
     -
-      name: Update slackpkg
+      name: Download unRaid
       run: |
-        gecho() { printf '\033[0;32m'; command echo "$@"; printf '\033[0m'; }
-        alias wget='wget -q'
-        sed -i 's/^#*\s*BATCH=.*/BATCH=on/' /etc/slackpkg/slackpkg.conf
-        sed -i 's/^#*\s*DEFAULT_ANSWER=.*/DEFAULT_ANSWER=y/' /etc/slackpkg/slackpkg.conf
-        slackpkg() {
-          command slackpkg "$@" <<< y 2>&1 | grep -E 'Installing package|GPG key added|Package .* installed\.'
-        }
-        installpkg() {
-          command installpkg "$@" 2>&1 | grep -E 'Installing package|Package .* installed\.'
-        }
         gecho "Processors detected: $(nproc)"
         gecho $(uname -r)
-
-        gecho "Installing needed packages..."
-        slackpkg update gpg <<< y
-        slackpkg install zlib nghttp3 pahole
-        # wget http://ftp.osuosl.org/pub/slackware/slackware64-current/slackware64/d/pahole-1.30-x86_64-1.txz
-        # wget https://slackers.it/repository/slackware64-current/git-lfs/git-lfs-3.6.1-x86_64-2cf.txz
-        # installpkg *.txz
-        # rm *.txz
 
         gecho "Finding latest unRaid version..."
         url=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].url')
