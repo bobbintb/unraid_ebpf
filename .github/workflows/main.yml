@@ -34,6 +34,7 @@ jobs:
         alias wget='wget -q'
         sed -i 's/^#*\s*BATCH=.*/BATCH=on/' /etc/slackpkg/slackpkg.conf
         sed -i 's/^#*\s*DEFAULT_ANSWER=.*/DEFAULT_ANSWER=y/' /etc/slackpkg/slackpkg.conf
+        echo "https://ftp.osuosl.org/pub/slackware/slackware64-current/" >> /etc/slackpkg/mirrors
         slackpkg() {
           command slackpkg "$@" <<< y 2>&1 | \
             grep -E 'Installing package|GPG key added|Package .* installed' || true
