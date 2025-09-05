@@ -45,11 +45,11 @@ jobs:
 
         gecho "Installing needed packages..."
         slackpkg update gpg <<< y
-        slackpkg install zlib
-        wget http://ftp.osuosl.org/pub/slackware/slackware64-current/slackware64/d/pahole-1.30-x86_64-1.txz
+        slackpkg install zlib nghttp3 pahole
+        # wget http://ftp.osuosl.org/pub/slackware/slackware64-current/slackware64/d/pahole-1.30-x86_64-1.txz
         # wget https://slackers.it/repository/slackware64-current/git-lfs/git-lfs-3.6.1-x86_64-2cf.txz
-        installpkg *.txz
-        rm *.txz
+        # installpkg *.txz
+        # rm *.txz
 
         gecho "Finding latest unRaid version..."
         url=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].url')
