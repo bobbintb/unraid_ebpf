@@ -91,6 +91,7 @@ jobs:
             --enable CONFIG_DEBUG_INFO \
             --disable CONFIG_DEBUG_INFO_NONE \
             --disable CONFIG_DEBUG_INFO_REDUCED \
+            --enable CONFIG_DEBUG_INFO_DWARF4 \
             --enable CONFIG_DEBUG_INFO_COMPRESSED_NONE \
             --disable CONFIG_DEBUG_INFO_COMPRESSED_ZLIB \
             --disable CONFIG_DEBUG_INFO_COMPRESSED_ZSTD \
