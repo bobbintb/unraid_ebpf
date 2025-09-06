@@ -35,7 +35,7 @@ jobs:
         sed -i 's/^#*\s*DEFAULT_ANSWER=.*/DEFAULT_ANSWER=y/' /etc/slackpkg/slackpkg.conf
         gecho "Installing needed packages..."
         slackpkg update gpg <<< y
-        slackpkg install zlib nghttp3 pahole llvm
+        slackpkg install zlib nghttp3 pahole llvm libedit
     - 
       name: Checkout
       uses: actions/checkout@v4
