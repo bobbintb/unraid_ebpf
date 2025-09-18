@@ -1,21 +1,104 @@
+#!/bin/bash
+set -euo pipefail
+
 . /etc/unraid-version
-mkdir -p /boot/bzbackup
-mv /boot/bzimage /boot/bzbackup/bzimage.${version}
-mv /boot/bzimage.sha256 /boot/bzbackup/bzimage.${version}.sha256
 
-mv /boot/bzmodules /boot/bzbackup/bzmodules.${version}
-mv /boot/bzmodules.sha256 /boot/bzbackup/bzmodules.${version}.sha256
+WORKDIR="/boot"
+BACKUPDIR="$WORKDIR/bzbackup"
+TMPDIR="$WORKDIR/tmp_dl"
+BASEURL="https://github.com/bobbintb/unraid_ebpf/raw/refs/heads/main/${version}"
 
-wget -O /boot/bzimage https://github.com/bobbintb/unraid_ebpf/raw/refs/heads/main/${version}/bzimage-${version}
-wget -O /boot/bzimage.sha256 https://github.com/bobbintb/unraid_ebpf/raw/refs/heads/main/${version}/bzimage-${version}.sha256
+mkdir -p "$BACKUPDIR" "$TMPDIR"
 
+# Common wget options for resilience
+WGET="wget -q --show-progress --progress=bar:force --tries=5 --waitretry=5 --timeout=30 --retry-connrefused"
+
+# --- Download bzimage and checksum ---
+echo "Downloading bzimage..."
+if ! $WGET -O "$TMPDIR/bzimage" "$BASEURL/bzimage-${version}"; then
+  echo "Error: Failed to download bzimage"
+  exit 1
+fi
+
+if ! $WGET -O "$TMPDIR/bzimage.sha256" "$BASEURL/bzimage-${version}.sha256"; then
+  echo "Error: Failed to download bzimage sha256"
+  exit 1
+fi
+
+# --- Download bzmodules parts ---
+echo "Downloading bzmodules parts..."
 i=1
+parts=()
 while true; do
   part=$(printf "%02d" "$i")
-  wget -q --spider "https://github.com/bobbintb/unraid_ebpf/raw/refs/heads/main/${version}/bzmodules-${version}.part.${part}" || break
-  wget -O /boot/bzmodules.part.${part} "https://github.com/bobbintb/unraid_ebpf/raw/refs/heads/main/${version}/bzmodules-${version}.part.${part}"
+  url="$BASEURL/bzmodules-${version}.part.${part}"
+  outfile="$TMPDIR/bzmodules.part.${part}"
+
+  # Check if the part exists
+  if ! $WGET --spider "$url"; then
+    if [ $i -eq 1 ]; then
+      echo "Error: No bzmodules parts found at $url"
+      exit 1
+    else
+      break  # all parts done
+    fi
+  fi
+
+  # Download the part
+  echo "  Downloading part $part..."
+  if ! $WGET -O "$outfile" "$url"; then
+    echo "Error: Failed to download $url"
+    exit 1
+  fi
+
+  parts+=("$outfile")
   i=$((i+1))
 done
 
-cat /boot/bzmodules.part.* > /boot/bzmodules && rm /boot/bzmodules.part.*
-wget -O /boot/bzmodules.sha256 https://github.com/bobbintb/unraid_ebpf/raw/refs/heads/main/${version}/bzmodules-${version}.sha256
+# Make sure we got at least one part
+if [ ${#parts[@]} -eq 0 ]; then
+  echo "Error: bzmodules parts missing"
+  exit 1
+fi
+
+# Combine parts
+cat "${parts[@]}" > "$TMPDIR/bzmodules"
+
+# Download bzmodules sha256
+if ! $WGET -O "$TMPDIR/bzmodules.sha256" "$BASEURL/bzmodules-${version}.sha256"; then
+  echo "Error: Failed to download bzmodules sha256"
+  exit 1
+fi
+
+# --- Verify checksums ---
+echo "Verifying checksums..."
+pushd "$TMPDIR" >/dev/null
+if ! sha256sum -c bzimage.sha256; then
+  echo "Error: bzimage checksum mismatch"
+  exit 1
+fi
+
+if ! sha256sum -c bzmodules.sha256; then
+  echo "Error: bzmodules checksum mismatch"
+  exit 1
+fi
+popd >/dev/null
+
+# --- Backup current files ---
+echo "Backing up current files..."
+mv "$WORKDIR/bzimage"          "$BACKUPDIR/bzimage.${version}"
+mv "$WORKDIR/bzimage.sha256"   "$BACKUPDIR/bzimage.${version}.sha256"
+mv "$WORKDIR/bzmodules"        "$BACKUPDIR/bzmodules.${version}"
+mv "$WORKDIR/bzmodules.sha256" "$BACKUPDIR/bzmodules.${version}.sha256"
+
+# --- Install new files ---
+echo "Installing new files..."
+mv "$TMPDIR/bzimage"          "$WORKDIR/bzimage"
+mv "$TMPDIR/bzimage.sha256"   "$WORKDIR/bzimage.sha256"
+mv "$TMPDIR/bzmodules"        "$WORKDIR/bzmodules"
+mv "$TMPDIR/bzmodules.sha256" "$WORKDIR/bzmodules.sha256"
+
+# Cleanup
+rm -rf "$TMPDIR"
+
+echo "Done!"
