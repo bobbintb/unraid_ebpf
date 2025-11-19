@@ -69,6 +69,7 @@ jobs:
         gecho "Extracting Unraid... "
         unzip -o -q $FILENAME -d unRAIDServer
         gecho "done."
+        rm -f "$FILENAME"
     -
       name: Download Linux kernel
       run: |
@@ -86,6 +87,7 @@ jobs:
         mkdir -p linux
         tar xf linux-${KERNEL_VERSION}.tar.xz -C linux --strip-components 1
         gecho "done."
+        rm -f linux-${KERNEL_VERSION}.tar.xz
     -
       name: Patch kernel
       run: |
