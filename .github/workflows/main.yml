@@ -8,7 +8,7 @@ jobs:
       contents: write
     container:
       image: ghcr.io/ich777/unraid_kernel:gcc_14.2.0
-      options: --privileged -v /__w:/__w
+      options: --privileged -v /mnt:/mnt
     steps:
     -
       # Bootstrap step – define env vars, aliases, functions once
@@ -84,8 +84,9 @@ jobs:
         [ -f linux-${KERNEL_VERSION}.tar.xz ] || wget https://cdn.kernel.org/pub/linux/kernel/v${MAJOR_VERSION}.x/linux-${KERNEL_VERSION}.tar.xz
         gecho "done."
         gecho "Extracting Linux kernel... "
-        mkdir -p linux
-        tar xf linux-${KERNEL_VERSION}.tar.xz -C linux --strip-components 1
+        mkdir -p /mnt/linux
+        tar xf linux-${KERNEL_VERSION}.tar.xz -C /mnt/linux --strip-components 1
+        ln -s /mnt/linux linux
         gecho "done."
         rm -f linux-${KERNEL_VERSION}.tar.xz
     -
