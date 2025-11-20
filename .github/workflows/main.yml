@@ -8,7 +8,7 @@ jobs:
       contents: write
     container:
       image: ghcr.io/ich777/unraid_kernel:gcc_14.2.0
-      options: --privileged
+      options: --privileged -v /__w:/__w
     steps:
     -
       # Bootstrap step – define env vars, aliases, functions once
@@ -47,6 +47,12 @@ jobs:
         key: slackware-packages-${{ github.sha }}
         restore-keys: |
           slackware-packages-
+        # key: ${{ runner.os }}-slackpkg-${{ hashFiles('**/package-list.txt') }}
+        # restore-keys: |
+        #   ${{ runner.os }}-slackpkg-
+        #key: slackpkg-${{ runner.os }}-${{ inputs.VERSION }}-${{ hashFiles('SlackBuilds/**/*') }}
+        #restore-keys: |
+        #  slackpkg-${{ runner.os }}-${{ inputs.VERSION }}-
     -
       name: Download unRaid
       run: |
@@ -61,7 +67,7 @@ jobs:
         [ -f $FILENAME ] || wget $URL
         gecho "done."
         gecho "Extracting Unraid... "
-        unzip -o -q $FILENAME -d /tmp/unRAIDServer
+        unzip -o -q $FILENAME -d unRAIDServer
         gecho "done."
         rm -f "$FILENAME"
     -
@@ -69,17 +75,17 @@ jobs:
       run: |
         . /etc/bootstrap
         gecho "Determining kernel version needed for Unraid... "
-        cd /tmp/unRAIDServer    
+        cd unRAIDServer    
         KERNEL_VERSION=$(file bzimage | awk -F'version ' '{print $2}' | cut -d' ' -f1 | cut -d'-' -f1)
         echo "KERNEL_VERSION=$KERNEL_VERSION" >> $GITHUB_ENV
         MAJOR_VERSION=${KERNEL_VERSION%%.*}
         gecho "Downloading Linux kernel ${KERNEL_VERSION}... "
-        cd /tmp
+        cd ..
         [ -f linux-${KERNEL_VERSION}.tar.xz ] || wget https://cdn.kernel.org/pub/linux/kernel/v${MAJOR_VERSION}.x/linux-${KERNEL_VERSION}.tar.xz
         gecho "done."
         gecho "Extracting Linux kernel... "
-        mkdir -p /tmp/linux
-        tar xf linux-${KERNEL_VERSION}.tar.xz -C /tmp/linux --strip-components 1
+        mkdir -p linux
+        tar xf linux-${KERNEL_VERSION}.tar.xz -C linux --strip-components 1
         gecho "done."
         rm -f linux-${KERNEL_VERSION}.tar.xz
     -
@@ -87,13 +93,13 @@ jobs:
       run: |
         . /etc/bootstrap
         gecho "Copying patches... "
-        cd /tmp/unRAIDServer
+        cd unRAIDServer
         unsquashfs -d patches bzfirmware src
-        cd /tmp
-        cp -r /tmp/unRAIDServer/patches/src/linux-*-Unraid/. /tmp/linux/
+        cd ..
+        cp -r unRAIDServer/patches/src/linux-*-Unraid/. linux/
         gecho "done."
         gecho "Applying patches... "
-        cd /tmp/linux
+        cd linux
         find . -type f -iname '*.patch' -print0 | xargs -n1 -0 patch -p1 -i
         gecho "done."
 
@@ -127,19 +133,18 @@ jobs:
             --enable CONFIG_SECURITYFS \
             --enable CONFIG_BPF_JIT
             make -j$(nproc) olddefconfig
-            cp .config /tmp/kernel.config
+            cp .config ../kernel.config
         gecho "done."
     -
       name: Build
       run: |
         . /etc/bootstrap
-        cd /tmp/linux
-
+        cd linux
         gecho "Making bzImage... "
         bzimagename=bzimage-${VERSION_ID}
         make -j$(nproc) bzImage > /dev/null
-        mv arch/x86/boot/bzImage /tmp/$bzimagename
-        sha256sum /tmp/$bzimagename > /tmp/$bzimagename.sha256
+        mv arch/x86/boot/bzImage ../$bzimagename
+        sha256sum ../$bzimagename > ../$bzimagename.sha256
         gecho "done."
 
         gecho "Making... "
@@ -148,36 +153,45 @@ jobs:
         
         gecho "Making modules... "
         make -j$(nproc) modules > /dev/null
-        make INSTALL_MOD_PATH=/tmp/modules modules_install > /dev/null
-        find /tmp/modules -name '*.ko' -exec pahole --btf_encode --skip_other {} \;
-        depmod -b /tmp/modules ${KERNEL_VERSION}-Unraid
+        # make INSTALL_MOD_PATH=../modules INSTALL_MOD_STRIP=1 modules_install > /dev/null
+        make INSTALL_MOD_PATH=../modules modules_install > /dev/null
+        find ../modules -name '*.ko' -exec pahole --btf_encode --skip_other {} \;
+        cd ..
+        depmod -b modules ${KERNEL_VERSION}-Unraid
         gecho "done."
 
         gecho "Creating bzmodules... "
-        cd /tmp/unRAIDServer
+        cd unRAIDServer
         unsquashfs -d modules bzmodules
-        rm -rf /tmp/unRAIDServer/modules/modules/*-Unraid
-        cp -r /tmp/modules/lib/modules/${KERNEL_VERSION}-Unraid /tmp/unRAIDServer/modules/modules
-        mksquashfs /tmp/unRAIDServer/modules /tmp/bzmodules-${VERSION_ID}
-        sha256sum /tmp/bzmodules-${VERSION_ID} > /tmp/bzmodules-${VERSION_ID}.sha256
-        split -b 100M --numeric-suffixes=1 /tmp/bzmodules-${VERSION_ID} /tmp/bzmodules-${VERSION_ID}.part.
-        rm /tmp/bzmodules-${VERSION_ID}
+        cd ..
+        rm -rf unRAIDServer/modules/modules/*-Unraid
+        cp -r modules/lib/modules/${KERNEL_VERSION}-Unraid unRAIDServer/modules/modules
+        cd unRAIDServer
+        mksquashfs modules ../bzmodules-${VERSION_ID}
+        cd ..
+        sha256sum bzmodules-${VERSION_ID} > bzmodules-${VERSION_ID}.sha256
+        split -b 100M --numeric-suffixes=1 bzmodules-${VERSION_ID} bzmodules-${VERSION_ID}.part.
+        rm bzmodules-${VERSION_ID}
         gecho "done."
 
         gecho "Extracting BTF... "
-        cp vmlinux /tmp/vmlinux
-        llvm-objcopy --dump-section .BTF=/tmp/vmlinux-${VERSION_ID}.btf /tmp/vmlinux
+        cd linux
+        cp vmlinux ../vmlinux
+        cd ..
+        llvm-objcopy --dump-section .BTF=vmlinux-${VERSION_ID}.btf vmlinux
         gecho "done."
 
         gecho "Cleaning up... "
-        rm /tmp/vmlinux
-        rm -dr /tmp/linux/
-        rm -dr /tmp/unRAIDServer/
-        rm -dr /tmp/modules/
+        rm vmlinux
+        rm -dr ./linux/
+        rm -dr ./unRAIDServer/
+        rm unRAIDServer-*
+        rm -dr linux-*
+        rm -dr ./modules/
         gecho "done."
 
-        mkdir -p /tmp/${VERSION_ID}
-        for f in /tmp/*; do [ -f "$f" ] && mv "$f" "/tmp/${VERSION_ID}/"; done
+        mkdir -p ${VERSION_ID}
+        for f in *; do [ -f "$f" ] && mv "$f" "$VERSION_ID"/; done
 
         # git lfs track "bzmodules-${VERSION_ID}"
         REPO=${GITHUB_REPOSITORY##*/}
