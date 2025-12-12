@@ -35,8 +35,6 @@ jobs:
         gecho "Installing needed packages..."
         slackpkg update gpg <<< y
         slackpkg install zlib nghttp3 pahole llvm libedit libxml2
-        rm -dr /var/cache/packages/*
-        rm -dr /var/log/packages/*
     - 
       name: Checkout
       uses: actions/checkout@v4
@@ -59,6 +57,8 @@ jobs:
         rm -rf /var/lib/apt/lists/* 2>/dev/null || true
         # Clean package manager caches
         find /var/cache -type f -delete 2>/dev/null || true
+        rm -dr /var/cache/packages/*
+        rm -dr /var/log/packages/*
         gecho "Available space after cleanup:"
         df -h
     -
