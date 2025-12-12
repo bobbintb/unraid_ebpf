@@ -57,6 +57,7 @@ jobs:
         rm -rf /var/lib/apt/lists/* 2>/dev/null || true
         # Clean package manager caches
         find /var/cache -type f -delete 2>/dev/null || true
+        ls -ls /var/cache/packages
         rm -dr /var/cache/packages/*
         rm -dr /var/log/packages/*
         gecho "Available space after cleanup:"
