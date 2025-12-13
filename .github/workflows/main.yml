@@ -8,21 +8,19 @@ jobs:
       contents: write
     container:
       image: ghcr.io/ich777/unraid_kernel:gcc_14.2.0
-      options: --privileged
+      options: --privileged -v /usr/local/lib/android:/host/android -v /usr/share/dotnet:/host/dotnet -v /opt/ghc:/host/ghc -v /opt/hostedtoolcache:/host/tools
     steps:
-    - 
-      name: Free Disk Space (Ubuntu)
-      uses: jlumbroso/free-disk-space@v1.3.1
-      with:
-        # aggressive cleanup to make space for kernel compilation
-        tool-cache: true
-        android: true
-        dotnet: true
-        haskell: true
-        large-packages: true
-        docker-images: true
-        swap-storage: false # Don't create swap inside container context, it often fails
-        
+    -
+      name: Free Disk Space (Manual)
+      run: |
+        echo "Freeing space by deleting mapped host directories..."
+        # We mapped these to /host/... to avoid clashing with container paths
+        rm -rf /host/android
+        rm -rf /host/dotnet
+        rm -rf /host/ghc
+        rm -rf /host/tools
+        echo "Disk space freed."
+        df -h
     -
       # Bootstrap step – define env vars, aliases, functions once
       name: Bootstrap environment
@@ -59,6 +57,12 @@ jobs:
         key: slackware-packages-${{ github.sha }}
         restore-keys: |
           slackware-packages-
+        # key: ${{ runner.os }}-slackpkg-${{ hashFiles('**/package-list.txt') }}
+        # restore-keys: |
+        #   ${{ runner.os }}-slackpkg-
+        #key: slackpkg-${{ runner.os }}-${{ inputs.VERSION }}-${{ hashFiles('SlackBuilds/**/*') }}
+        #restore-keys: |
+        #  slackpkg-${{ runner.os }}-${{ inputs.VERSION }}-
     -
       name: Download unRaid
       run: |
