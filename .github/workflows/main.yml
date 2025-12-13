@@ -15,10 +15,10 @@ jobs:
       run: |
         echo "Freeing space by deleting mapped host directories..."
         # We mapped these to /host/... to avoid clashing with container paths
-        rm -dr /host/android
-        rm -dr /host/dotnet
-        rm -dr /host/ghc
-        rm -dr /host/tools
+        rm -dr /host/android/*
+        rm -dr /host/dotnet/*
+        rm -dr /host/ghc/*
+        rm -dr /host/tools/*
         echo "Disk space freed."
         df -h
     -
