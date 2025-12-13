@@ -45,6 +45,7 @@ jobs:
         sed -i 's/^#*\s*DEFAULT_ANSWER=.*/DEFAULT_ANSWER=y/' /etc/slackpkg/slackpkg.conf
         gecho "Installing needed packages..."
         slackpkg update gpg <<< y
+        slackpkg remove openssl-3.1.1-x86_64-1 aaa_glibc-solibs-2.37-x86_64-2 coreutils-9.3-x86_64-1 gawk-5.2.2-x86_64-1 gettext-0.22-x86_64-1 libseccomp-2.5.4-x86_64-1 ncurses-6.4_20230610-x86_64-1 squashfs-tools-4.5-x86_64-2 util-linux-2.39.1-x86_64-3 xz-5.4.3-x86_64-1
         slackpkg install zlib nghttp3 pahole llvm libedit libxml2
         slackpkg upgrade glibc
     - 
