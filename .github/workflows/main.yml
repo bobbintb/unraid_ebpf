@@ -10,17 +10,19 @@ jobs:
       image: ghcr.io/ich777/unraid_kernel:gcc_14.2.0
       options: --privileged
     steps:
-    -
-      name: Free Disk Space
-      uses: jlumbroso/free-disk-space@main
+    - 
+      name: Free Disk Space (Ubuntu)
+      uses: jlumbroso/free-disk-space@v1.3.1
       with:
+        # aggressive cleanup to make space for kernel compilation
         tool-cache: true
         android: true
         dotnet: true
         haskell: true
         large-packages: true
-        docker-images: false
-        swap-storage: false
+        docker-images: true
+        swap-storage: false # Don't create swap inside container context, it often fails
+        
     -
       # Bootstrap step – define env vars, aliases, functions once
       name: Bootstrap environment
@@ -58,19 +60,6 @@ jobs:
         restore-keys: |
           slackware-packages-
     -
-      name: Free up disk space
-      run: |
-        . /etc/bootstrap
-        gecho "Checking available disk space..."
-        df -h
-        gecho "Cleaning up unnecessary files..."
-        # Remove apt caches if they exist
-        rm -rf /var/lib/apt/lists/* 2>/dev/null || true
-        # Clean package manager caches
-        find /var/cache -type f -delete 2>/dev/null || true
-        gecho "Available space after cleanup:"
-        df -h
-    -
       name: Download unRaid
       run: |
         . /etc/bootstrap
@@ -85,8 +74,6 @@ jobs:
         gecho "done."
         gecho "Extracting Unraid... "
         unzip -o -q $FILENAME -d unRAIDServer
-        # Clean up zip file after extraction
-        rm -f $FILENAME
         gecho "done."
     -
       name: Download Linux kernel
@@ -104,8 +91,6 @@ jobs:
         gecho "Extracting Linux kernel... "
         mkdir -p linux
         tar xf linux-${KERNEL_VERSION}.tar.xz -C linux --strip-components 1
-        # Clean up tar file after extraction
-        rm -f linux-${KERNEL_VERSION}.tar.xz
         gecho "done."
     -
       name: Patch kernel
@@ -116,14 +101,10 @@ jobs:
         unsquashfs -d patches bzfirmware src
         cd ..
         cp -r unRAIDServer/patches/src/linux-*-Unraid/. linux/
-        # Clean up patches directory
-        rm -rf unRAIDServer/patches
         gecho "done."
         gecho "Applying patches... "
         cd linux
         find . -type f -iname '*.patch' -print0 | xargs -n1 -0 patch -p1 -i
-        # Remove patch files after applying
-        find . -type f -iname '*.patch' -delete
         gecho "done."
         gecho "Applying kernel config... "
         ./scripts/config --enable CONFIG_MD_UNRAID \
@@ -162,48 +143,30 @@ jobs:
       run: |
         . /etc/bootstrap
         cd linux
-        gecho "Checking disk space before build..."
-        df -h
-        
         gecho "Making bzImage... "
         bzimagename=bzimage-${VERSION_ID}
         make -j$(nproc) bzImage > /dev/null
         mv arch/x86/boot/bzImage ../$bzimagename
         sha256sum ../$bzimagename > ../$bzimagename.sha256
         gecho "done."
-        
-        # Clean up build artifacts after bzImage
-        gecho "Cleaning intermediate build files..."
-        make clean > /dev/null
-        gecho "Disk space after bzImage cleanup:"
-        df -h
-        
         gecho "Making... "
         make -j$(nproc) > /dev/null
         gecho "done."
         
         gecho "Making modules... "
         make -j$(nproc) modules > /dev/null
+        # make INSTALL_MOD_PATH=../modules INSTALL_MOD_STRIP=1 modules_install > /dev/null
         make INSTALL_MOD_PATH=../modules modules_install > /dev/null
-        
-        # Process BTF encoding in smaller batches to avoid disk space issues
-        gecho "Encoding BTF for modules..."
         find ../modules -name '*.ko' -exec pahole --btf_encode --skip_other {} \;
-        
         cd ..
         depmod -b modules ${KERNEL_VERSION}-Unraid
         gecho "done."
-        
         gecho "Creating bzmodules... "
         cd unRAIDServer
         unsquashfs -d modules bzmodules
         cd ..
         rm -rf unRAIDServer/modules/modules/*-Unraid
         cp -r modules/lib/modules/${KERNEL_VERSION}-Unraid unRAIDServer/modules/modules
-        
-        # Clean up the source modules directory
-        rm -rf modules
-        
         cd unRAIDServer
         mksquashfs modules ../bzmodules-${VERSION_ID}
         cd ..
@@ -211,27 +174,23 @@ jobs:
         split -b 100M --numeric-suffixes=1 bzmodules-${VERSION_ID} bzmodules-${VERSION_ID}.part.
         rm bzmodules-${VERSION_ID}
         gecho "done."
-        
         gecho "Extracting BTF... "
         cd linux
         cp vmlinux ../vmlinux
         cd ..
         llvm-objcopy --dump-section .BTF=vmlinux-${VERSION_ID}.btf vmlinux
         gecho "done."
-        
         gecho "Cleaning up... "
         rm vmlinux
         rm -dr ./linux/
         rm -dr ./unRAIDServer/
-        rm -f unRAIDServer-*
+        rm unRAIDServer-*
         rm -dr linux-*
+        rm -dr ./modules/
         gecho "done."
-        
-        gecho "Final disk space:"
-        df -h
-        
         mkdir -p ${VERSION_ID}
         for f in *; do [ -f "$f" ] && mv "$f" "$VERSION_ID"/; done
+        # git lfs track "bzmodules-${VERSION_ID}"
         REPO=${GITHUB_REPOSITORY##*/}
         REPO_DIR="/__w/${REPO}/${REPO}"
         git config --global --add safe.directory $REPO_DIR
