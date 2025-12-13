@@ -1,0 +1,18 @@
+name: test template
+on:
+  workflow_dispatch:
+jobs:
+  slackbuild_and_upload:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    container:
+      image: ghcr.io/ich777/unraid_kernel:gcc_14.2.0
+      options: --privileged -v /usr/local/lib/android:/host/android -v /usr/share/dotnet:/host/dotnet -v /opt/ghc:/host/ghc -v /opt/hostedtoolcache:/host/tools
+    steps:
+    -
+      name: test
+      run: |
+        ldd --version
+
+    
