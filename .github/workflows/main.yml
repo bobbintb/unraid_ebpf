@@ -11,6 +11,25 @@ jobs:
       options: --privileged
     steps:
     -
+      name: Maximize build space
+      run: |
+        echo "=== Initial disk usage ==="
+        df -h
+        echo "=== Finding large directories ==="
+        du -h --max-depth=2 / 2>/dev/null | grep -E '^[0-9.]+G' | sort -rh | head -20 || true
+        echo "=== Cleaning up ==="
+        # Clean up the container itself
+        rm -rf /var/cache/* 2>/dev/null || true
+        rm -rf /tmp/* 2>/dev/null || true
+        rm -rf /var/log/* 2>/dev/null || true
+        # Try to clean the runner (may not have permissions)
+        rm -rf /usr/share/dotnet 2>/dev/null || true
+        rm -rf /usr/local/lib/android 2>/dev/null || true
+        rm -rf /opt/ghc 2>/dev/null || true
+        rm -rf /opt/hostedtoolcache 2>/dev/null || true
+        echo "=== After cleanup ==="
+        df -h
+    -
       # Bootstrap step – define env vars, aliases, functions once
       name: Bootstrap environment
       run: |
@@ -29,7 +48,6 @@ jobs:
     -
       name: Install dependencies
       run: |
-        du -h --max-depth=2 / 2>/dev/null | grep -E '^[0-9.]+G' | sort -rh | head -20 || true
         . /etc/bootstrap
         sed -i 's/^#*\s*BATCH=.*/BATCH=on/' /etc/slackpkg/slackpkg.conf
         sed -i 's/^#*\s*DEFAULT_ANSWER=.*/DEFAULT_ANSWER=y/' /etc/slackpkg/slackpkg.conf
@@ -58,9 +76,6 @@ jobs:
         rm -rf /var/lib/apt/lists/* 2>/dev/null || true
         # Clean package manager caches
         find /var/cache -type f -delete 2>/dev/null || true
-        ls -ls /var/cache/packages
-        rm -dr /var/cache/packages/*
-        rm -dr /var/log/packages/*
         gecho "Available space after cleanup:"
         df -h
     -
