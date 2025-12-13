@@ -46,6 +46,7 @@ jobs:
         gecho "Installing needed packages..."
         slackpkg update gpg <<< y
         slackpkg install zlib nghttp3 pahole llvm libedit libxml2
+        slackpkg upgrade glibc
     - 
       name: Checkout
       uses: actions/checkout@v4
