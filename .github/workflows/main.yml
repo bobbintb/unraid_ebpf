@@ -29,6 +29,7 @@ jobs:
     -
       name: Install dependencies
       run: |
+        du -h --max-depth=2 / 2>/dev/null | grep -E '^[0-9.]+G' | sort -rh | head -20 || true
         . /etc/bootstrap
         sed -i 's/^#*\s*BATCH=.*/BATCH=on/' /etc/slackpkg/slackpkg.conf
         sed -i 's/^#*\s*DEFAULT_ANSWER=.*/DEFAULT_ANSWER=y/' /etc/slackpkg/slackpkg.conf
