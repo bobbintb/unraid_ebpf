@@ -6,7 +6,7 @@ set -euo pipefail
 WORKDIR="/boot"
 BACKUPDIR="$WORKDIR/bzbackup"
 TMPDIR="$WORKDIR/tmp_dl"
-BASEURL="https://github.com/bobbintb/unraid_ebpf/raw/refs/heads/main/${version}"
+BASEURL="https://github.com/bobbintb/unraid_ebpf/releases/download/${version}"
 
 mkdir -p "$BACKUPDIR" "$TMPDIR"
 
@@ -25,44 +25,12 @@ if ! $WGET -O "$TMPDIR/bzimage.sha256" "$BASEURL/bzimage-${version}.sha256"; the
   exit 1
 fi
 
-# --- Download bzmodules parts ---
-echo "Downloading bzmodules parts..."
-i=1
-parts=()
-while true; do
-  part=$(printf "%02d" "$i")
-  url="$BASEURL/bzmodules-${version}.part.${part}"
-  outfile="$TMPDIR/bzmodules.part.${part}"
-
-  # Check if the part exists
-  if ! $WGET --spider "$url"; then
-    if [ $i -eq 1 ]; then
-      echo "Error: No bzmodules parts found at $url"
-      exit 1
-    else
-      break  # all parts done
-    fi
-  fi
-
-  # Download the part
-  echo "  Downloading part $part..."
-  if ! $WGET -O "$outfile" "$url"; then
-    echo "Error: Failed to download $url"
-    exit 1
-  fi
-
-  parts+=("$outfile")
-  i=$((i+1))
-done
-
-# Make sure we got at least one part
-if [ ${#parts[@]} -eq 0 ]; then
-  echo "Error: bzmodules parts missing"
+# --- Download bzmodules (complete file, not parts) ---
+echo "Downloading bzmodules..."
+if ! $WGET -O "$TMPDIR/bzmodules" "$BASEURL/bzmodules-${version}"; then
+  echo "Error: Failed to download bzmodules"
   exit 1
 fi
-
-# Combine parts
-cat "${parts[@]}" > "$TMPDIR/bzmodules"
 
 # Download bzmodules sha256
 if ! $WGET -O "$TMPDIR/bzmodules.sha256" "$BASEURL/bzmodules-${version}.sha256"; then
