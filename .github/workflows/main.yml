@@ -153,7 +153,9 @@ jobs:
         bzimagename=bzimage-${VERSION_ID}
         make -j$(nproc) bzImage > /dev/null
         mv arch/x86/boot/bzImage ../$bzimagename
-        sha256sum ../$bzimagename > ../$bzimagename.sha256
+        cd ..
+        sha256sum $bzimagename > $bzimagename.sha256
+        cd linux
         gecho "done."
         gecho "Making... "
         make -j$(nproc) > /dev/null
