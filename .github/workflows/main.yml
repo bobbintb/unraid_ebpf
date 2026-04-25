@@ -113,8 +113,19 @@ jobs:
         find . -type f -iname '*.patch' -print0 | xargs -n1 -0 patch -p1 -i
         gecho "done."
         gecho "Applying kernel config... "
-        # Unraid config is usually named 'config' in the source tree they provide
-        [ -f config ] && cp config .config
+        # Unraid config is usually named 'config' or 'mcp64' in the source tree they provide
+        # Try a few common names
+        for cfg in config mcp64 .config; do
+          if [ -f "$cfg" ]; then
+            cp "$cfg" .config
+            gecho "Found base config: $cfg"
+            break
+          fi
+        done
+
+        # Ensure localversion doesn't override our CONFIG_LOCALVERSION
+        rm -f localversion*
+
         # SET THE NEW KERNEL NAME HERE
         ./scripts/config --set-str CONFIG_LOCALVERSION "-Unraid-eBPF"
         ./scripts/config --enable CONFIG_MD_UNRAID \
@@ -147,8 +158,9 @@ jobs:
             --enable CONFIG_BPF_JIT
 
         # Ensure bpf is in the LSM list for runtime activation
-        LSM=$(./scripts/config --state CONFIG_LSM | sed 's/CONFIG_LSM=//' | tr -d '"')
-        if [ -n "$LSM" ]; then
+        LSM_RAW=$(./scripts/config --state CONFIG_LSM)
+        if [ "$LSM_RAW" != "undef" ] && [ -n "$LSM_RAW" ]; then
+            LSM=$(echo "$LSM_RAW" | sed 's/CONFIG_LSM=//' | tr -d '"')
             if [[ ! "$LSM" =~ "bpf" ]]; then
                 ./scripts/config --set-str CONFIG_LSM "$LSM,bpf"
             fi
@@ -210,6 +222,10 @@ jobs:
         cd ..
         llvm-objcopy --dump-section .BTF=vmlinux-${VERSION_ID}.btf vmlinux
         gecho "done."
+        gecho "Cleaning up existing release assets... "
+        # Ensure new assets are uploaded by deleting existing ones with the same tag
+        gh release delete-asset "${VERSION_ID}" "bzimage-${VERSION_ID}" "bzimage-${VERSION_ID}.sha256" "bzmodules-${VERSION_ID}" "bzmodules-${VERSION_ID}.sha256" "vmlinux-${VERSION_ID}.btf" "kernel.config" --yes || true
+        gecho "done."
         gecho "Cleaning up... "
         rm vmlinux
         rm -dr ./linux/
@@ -243,5 +259,14 @@ jobs:
           kernel.config
         draft: false
         prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    -
+      name: Verify release assets
+      run: |
+        . /etc/bootstrap
+        gecho "Verifying uploaded assets..."
+        gh release view ${{ env.VERSION_ID }}
+        gecho "done."
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
