@@ -113,9 +113,8 @@ jobs:
         find . -type f -iname '*.patch' -print0 | xargs -n1 -0 patch -p1 -i
         gecho "done."
         gecho "Applying kernel config... "
-        cd linux
-        make -j$(nproc) olddefconfig
         # SET THE NEW KERNEL NAME HERE
+        make -j$(nproc) olddefconfig
         ./scripts/config --set-str CONFIG_LOCALVERSION "-Unraid-eBPF"
         ./scripts/config --enable CONFIG_MD_UNRAID \
             --enable CONFIG_DEBUG_INFO \
