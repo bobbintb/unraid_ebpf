@@ -107,17 +107,14 @@ jobs:
         unsquashfs -d patches bzfirmware src
         cd ..
         cp -r unRAIDServer/patches/src/linux-*-Unraid/. linux/
-        
-        # --- THE ONLY ADDITION ---
-        cp linux/unraid_config linux/.config
-        # -------------------------
-
         gecho "done."
         gecho "Applying patches... "
         cd linux
         find . -type f -iname '*.patch' -print0 | xargs -n1 -0 patch -p1 -i
         gecho "done."
         gecho "Applying kernel config... "
+        cd linux
+        make -j$(nproc) olddefconfig
         # SET THE NEW KERNEL NAME HERE
         ./scripts/config --set-str CONFIG_LOCALVERSION "-Unraid-eBPF"
         ./scripts/config --enable CONFIG_MD_UNRAID \
@@ -148,9 +145,8 @@ jobs:
             --enable CONFIG_BPF_EVENTS \
             --enable CONFIG_SECURITYFS \
             --enable CONFIG_BPF_JIT
-            make -j$(nproc) olddefconfig
-            cp .config ../kernel.config
-        gecho "done."    
+        cp .config ../kernel.config
+        gecho "done."
     -
       name: Build
       run: |
