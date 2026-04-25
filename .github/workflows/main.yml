@@ -107,6 +107,11 @@ jobs:
         unsquashfs -d patches bzfirmware src
         cd ..
         cp -r unRAIDServer/patches/src/linux-*-Unraid/. linux/
+        
+        # --- THE ONLY ADDITION ---
+        cp linux/unraid_config linux/.config
+        # -------------------------
+
         gecho "done."
         gecho "Applying patches... "
         cd linux
@@ -145,7 +150,7 @@ jobs:
             --enable CONFIG_BPF_JIT
             make -j$(nproc) olddefconfig
             cp .config ../kernel.config
-        gecho "done."
+        gecho "done."    
     -
       name: Build
       run: |
