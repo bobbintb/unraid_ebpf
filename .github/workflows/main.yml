@@ -115,7 +115,7 @@ jobs:
         gecho "Applying kernel config... "
         # Unraid config is usually named 'config' or 'mcp64' in the source tree they provide
         # Try a few common names
-        for cfg in config mcp64 .config; do
+        for cfg in config mcp64; do
           if [ -f "$cfg" ]; then
             cp "$cfg" .config
             gecho "Found base config: $cfg"
