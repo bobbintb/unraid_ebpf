@@ -222,8 +222,9 @@ jobs:
         cd ..
         llvm-objcopy --dump-section .BTF=vmlinux-${VERSION_ID}.btf vmlinux
         gecho "done."
-        gecho "Preparing replace.sh... "
-        sed "s|REPLACE_REPO|${{ github.repository }}|g" ../replace.sh > ../replace-${VERSION_ID}.sh
+        gecho "Cleaning up existing release assets... "
+        # Ensure new assets are uploaded by deleting existing ones with the same tag
+        gh release delete-asset "${VERSION_ID}" "bzimage-${VERSION_ID}" "bzimage-${VERSION_ID}.sha256" "bzmodules-${VERSION_ID}" "bzmodules-${VERSION_ID}.sha256" "vmlinux-${VERSION_ID}.btf" "kernel.config" --yes || true
         gecho "done."
         gecho "Cleaning up... "
         rm vmlinux
@@ -248,7 +249,6 @@ jobs:
           - `bzmodules-${{ env.VERSION_ID }}` - Kernel modules
           - `vmlinux-${{ env.VERSION_ID }}.btf` - BTF debug info
           - `kernel.config` - Kernel configuration
-          - `replace-${{ env.VERSION_ID }}.sh` - Update script
           - `.sha256` files for verification
         files: |
           bzimage-${{ env.VERSION_ID }}
@@ -257,8 +257,16 @@ jobs:
           bzmodules-${{ env.VERSION_ID }}.sha256
           vmlinux-${{ env.VERSION_ID }}.btf
           kernel.config
-          replace-${{ env.VERSION_ID }}.sh
         draft: false
         prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    -
+      name: Verify release assets
+      run: |
+        . /etc/bootstrap
+        gecho "Verifying uploaded assets..."
+        gh release view ${{ env.VERSION_ID }}
+        gecho "done."
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
