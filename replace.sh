@@ -6,7 +6,7 @@ set -euo pipefail
 WORKDIR="/boot"
 BACKUPDIR="$WORKDIR/bzbackup"
 TMPDIR="$WORKDIR/tmp_dl"
-BASEURL="https://github.com/bobbintb/unraid_ebpf/releases/download/${version}"
+BASEURL="https://github.com/REPLACE_REPO/releases/download/${version}"
 
 mkdir -p "$BACKUPDIR" "$TMPDIR"
 

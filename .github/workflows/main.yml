@@ -113,8 +113,19 @@ jobs:
         find . -type f -iname '*.patch' -print0 | xargs -n1 -0 patch -p1 -i
         gecho "done."
         gecho "Applying kernel config... "
-        # Unraid config is usually named 'config' in the source tree they provide
-        [ -f config ] && cp config .config
+        # Unraid config is usually named 'config' or 'mcp64' in the source tree they provide
+        # Try a few common names
+        for cfg in config mcp64 .config; do
+          if [ -f "$cfg" ]; then
+            cp "$cfg" .config
+            gecho "Found base config: $cfg"
+            break
+          fi
+        done
+
+        # Ensure localversion doesn't override our CONFIG_LOCALVERSION
+        rm -f localversion*
+
         # SET THE NEW KERNEL NAME HERE
         ./scripts/config --set-str CONFIG_LOCALVERSION "-Unraid-eBPF"
         ./scripts/config --enable CONFIG_MD_UNRAID \
@@ -147,8 +158,9 @@ jobs:
             --enable CONFIG_BPF_JIT
 
         # Ensure bpf is in the LSM list for runtime activation
-        LSM=$(./scripts/config --state CONFIG_LSM | sed 's/CONFIG_LSM=//' | tr -d '"')
-        if [ -n "$LSM" ]; then
+        LSM_RAW=$(./scripts/config --state CONFIG_LSM)
+        if [ "$LSM_RAW" != "undef" ] && [ -n "$LSM_RAW" ]; then
+            LSM=$(echo "$LSM_RAW" | sed 's/CONFIG_LSM=//' | tr -d '"')
             if [[ ! "$LSM" =~ "bpf" ]]; then
                 ./scripts/config --set-str CONFIG_LSM "$LSM,bpf"
             fi
@@ -210,6 +222,9 @@ jobs:
         cd ..
         llvm-objcopy --dump-section .BTF=vmlinux-${VERSION_ID}.btf vmlinux
         gecho "done."
+        gecho "Preparing replace.sh... "
+        sed "s|REPLACE_REPO|${{ github.repository }}|g" ../replace.sh > ../replace-${VERSION_ID}.sh
+        gecho "done."
         gecho "Cleaning up... "
         rm vmlinux
         rm -dr ./linux/
@@ -233,6 +248,7 @@ jobs:
           - `bzmodules-${{ env.VERSION_ID }}` - Kernel modules
           - `vmlinux-${{ env.VERSION_ID }}.btf` - BTF debug info
           - `kernel.config` - Kernel configuration
+          - `replace-${{ env.VERSION_ID }}.sh` - Update script
           - `.sha256` files for verification
         files: |
           bzimage-${{ env.VERSION_ID }}
@@ -241,6 +257,7 @@ jobs:
           bzmodules-${{ env.VERSION_ID }}.sha256
           vmlinux-${{ env.VERSION_ID }}.btf
           kernel.config
+          replace-${{ env.VERSION_ID }}.sh
         draft: false
         prerelease: false
       env:
