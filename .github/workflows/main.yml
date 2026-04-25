@@ -115,13 +115,29 @@ jobs:
         gecho "Applying kernel config... "
         # Unraid config is usually named 'config' or 'mcp64' in the source tree they provide
         # Try a few common names
+        gecho "Current directory: $(pwd)"
+        gecho "Files present: "
+        ls -F
+
+        FOUND_CONFIG=""
         for cfg in config mcp64; do
           if [ -f "$cfg" ]; then
             cp "$cfg" .config
-            gecho "Found base config: $cfg"
+            gecho "SUCCESS: Found base config: $cfg"
+            FOUND_CONFIG="yes"
             break
           fi
         done
+
+        if [ -z "$FOUND_CONFIG" ]; then
+          gecho "WARNING: No base config (config or mcp64) found in $(pwd)"
+          if [ -f ".config" ]; then
+            gecho "Using existing .config"
+          else
+            gecho "ERROR: No kernel configuration found!"
+            exit 1
+          fi
+        fi
 
         # Ensure localversion doesn't override our CONFIG_LOCALVERSION
         rm -f localversion*
