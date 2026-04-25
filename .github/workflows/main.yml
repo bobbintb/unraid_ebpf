@@ -113,6 +113,8 @@ jobs:
         find . -type f -iname '*.patch' -print0 | xargs -n1 -0 patch -p1 -i
         gecho "done."
         gecho "Applying kernel config... "
+        # SET THE NEW KERNEL NAME HERE
+        ./scripts/config --set-str CONFIG_LOCALVERSION "-Unraid-eBPF"
         ./scripts/config --enable CONFIG_MD_UNRAID \
             --enable CONFIG_DEBUG_INFO \
             --disable CONFIG_DEBUG_INFO_NONE \
@@ -167,14 +169,16 @@ jobs:
         make INSTALL_MOD_PATH=../modules modules_install > /dev/null
         find ../modules -name '*.ko' -exec pahole --btf_encode --skip_other {} \;
         cd ..
-        depmod -b modules ${KERNEL_VERSION}-Unraid
+        # UPDATED TO -Unraid-eBPF
+        depmod -b modules ${KERNEL_VERSION}-Unraid-eBPF
         gecho "done."
         gecho "Creating bzmodules... "
         cd unRAIDServer
         unsquashfs -d modules bzmodules
         cd ..
-        rm -rf unRAIDServer/modules/modules/*-Unraid
-        cp -r modules/lib/modules/${KERNEL_VERSION}-Unraid unRAIDServer/modules/modules
+        # UPDATED TO -Unraid-eBPF
+        rm -rf unRAIDServer/modules/modules/*-Unraid-eBPF
+        cp -r modules/lib/modules/${KERNEL_VERSION}-Unraid-eBPF unRAIDServer/modules/modules
         cd unRAIDServer
         mksquashfs modules ../bzmodules-${VERSION_ID}
         cd ..
