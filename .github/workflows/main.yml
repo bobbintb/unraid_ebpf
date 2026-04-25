@@ -113,6 +113,8 @@ jobs:
         find . -type f -iname '*.patch' -print0 | xargs -n1 -0 patch -p1 -i
         gecho "done."
         gecho "Applying kernel config... "
+        # Unraid config is usually named 'config' in the source tree they provide
+        [ -f config ] && cp config .config
         # SET THE NEW KERNEL NAME HERE
         ./scripts/config --set-str CONFIG_LOCALVERSION "-Unraid-eBPF"
         ./scripts/config --enable CONFIG_MD_UNRAID \
@@ -143,8 +145,26 @@ jobs:
             --enable CONFIG_BPF_EVENTS \
             --enable CONFIG_SECURITYFS \
             --enable CONFIG_BPF_JIT
-            make -j$(nproc) olddefconfig
-            cp .config ../kernel.config
+
+        # Ensure bpf is in the LSM list for runtime activation
+        LSM=$(./scripts/config --state CONFIG_LSM | sed 's/CONFIG_LSM=//' | tr -d '"')
+        if [ -n "$LSM" ]; then
+            if [[ ! "$LSM" =~ "bpf" ]]; then
+                ./scripts/config --set-str CONFIG_LSM "$LSM,bpf"
+            fi
+        else
+            # Default LSM list if CONFIG_LSM was not set, often includes:
+            # landlock,lockdown,yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor,bpf
+            ./scripts/config --set-str CONFIG_LSM "landlock,lockdown,yama,loadpin,safesetid,integrity,bpf"
+        fi
+
+        make -j$(nproc) olddefconfig
+
+        # Verify critical configs are enabled
+        grep -q "CONFIG_IKCONFIG_PROC=y" .config || (gecho "ERROR: CONFIG_IKCONFIG_PROC not enabled" && exit 1)
+        grep -q "CONFIG_BPF_LSM=y" .config || (gecho "ERROR: CONFIG_BPF_LSM not enabled" && exit 1)
+
+        cp .config ../kernel.config
         gecho "done."
     -
       name: Build
