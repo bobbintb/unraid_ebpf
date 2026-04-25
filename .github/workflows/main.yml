@@ -114,7 +114,6 @@ jobs:
         gecho "done."
         gecho "Applying kernel config... "
         # SET THE NEW KERNEL NAME HERE
-        make -j$(nproc) olddefconfig
         ./scripts/config --set-str CONFIG_LOCALVERSION "-Unraid-eBPF"
         ./scripts/config --enable CONFIG_MD_UNRAID \
             --enable CONFIG_DEBUG_INFO \
@@ -144,7 +143,8 @@ jobs:
             --enable CONFIG_BPF_EVENTS \
             --enable CONFIG_SECURITYFS \
             --enable CONFIG_BPF_JIT
-        cp .config ../kernel.config
+            make -j$(nproc) olddefconfig
+            cp .config ../kernel.config
         gecho "done."
     -
       name: Build
