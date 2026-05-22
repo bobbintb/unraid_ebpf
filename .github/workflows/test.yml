@@ -14,7 +14,7 @@ jobs:
         id: check
         run: |
           echo "Fetching latest UnRaid version..."
-          LATEST_VERSION=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].name' | sed 's/^Unraid //')
+          LATEST_VERSION=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list | max_by(.name | ltrimstr("Unraid ") | split(".") | map(tonumber)) | .name' | sed 's/^Unraid //')
           echo "Latest UnRaid version: $LATEST_VERSION"
           
           echo "Fetching latest release from GitHub..."
