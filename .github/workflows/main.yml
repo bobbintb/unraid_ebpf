@@ -71,7 +71,7 @@ jobs:
         . /etc/bootstrap
         gecho "Finding latest unRaid version..."
         RESPONSE=$(curl -s https://releases.unraid.net/usb-creator)
-        URL=$(echo $RESPONSE | jq -r '.os_list | max_by(.name | ltrimstr("Unraid ") | split(".") | map(tonumber)) | .url')
+        URL=$(echo $RESPONSE | jq -r '.os_list | max_by(.name | ltrimstr("Unraid ") | split(".") | map(tonumber)) | .url' | cut -d'?' -f1)
         NAME=$(echo $RESPONSE | jq -r '.os_list | max_by(.name | ltrimstr("Unraid ") | split(".") | map(tonumber)) | .name')
         FILENAME=$(basename "${URL%%\?*}")
         VERSION_ID=$(echo $NAME | sed 's/^Unraid //')
