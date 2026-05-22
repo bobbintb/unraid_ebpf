@@ -114,12 +114,24 @@ jobs:
         find . -type f -iname '*.patch' -print0 | xargs -n1 -0 patch -p1 -i
         gecho "done."
         gecho "Applying kernel config... "
-        # cd linux
-        pwd
-        ls -ls
+        cd linux
         make -j$(nproc) olddefconfig
         ./scripts/config --set-str CONFIG_LOCALVERSION "-Unraid-eBPF"
         ./scripts/config --enable CONFIG_MD_UNRAID \
+            --disable CONFIG_SCHED_CLASS_EXT \
+            --enable CONFIG_IKCONFIG \
+            --enable CONFIG_IKCONFIG_PROC \
+            --enable CONFIG_KPROBES \
+            --enable CONFIG_SECURITY \
+            --enable CONFIG_SECURITY_PATH \
+            --enable CONFIG_FTRACE_SYSCALLS \
+            --enable CONFIG_BPF_LSM \
+            --enable CONFIG_BPF_SYSCALL \
+            --enable CONFIG_BPF_EVENTS \
+            --enable CONFIG_SECURITYFS \
+            --enable CONFIG_BPF_JIT
+        make -j$(nproc) olddefconfig
+        ./scripts/config \
             --enable CONFIG_DEBUG_INFO \
             --disable CONFIG_DEBUG_INFO_NONE \
             --enable CONFIG_DEBUG_INFO_DWARF5 \
@@ -134,19 +146,7 @@ jobs:
             --enable CONFIG_DEBUG_INFO_BTF_MODULES \
             --disable CONFIG_MODULE_ALLOW_BTF_MISMATCH \
             --disable CONFIG_GDB_SCRIPTS \
-            --enable CONFIG_PROBE_EVENTS_BTF_ARGS \
-            --disable CONFIG_SCHED_CLASS_EXT \
-            --enable CONFIG_IKCONFIG \
-            --enable CONFIG_IKCONFIG_PROC \
-            --enable CONFIG_KPROBES \
-            --enable CONFIG_SECURITY \
-            --enable CONFIG_SECURITY_PATH \
-            --enable CONFIG_FTRACE_SYSCALLS \
-            --enable CONFIG_BPF_LSM \
-            --enable CONFIG_BPF_SYSCALL \
-            --enable CONFIG_BPF_EVENTS \
-            --enable CONFIG_SECURITYFS \
-            --enable CONFIG_BPF_JIT
+            --enable CONFIG_PROBE_EVENTS_BTF_ARGS
         cp .config ../kernel.config
         gecho "done."
     -
