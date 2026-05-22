@@ -14,6 +14,7 @@ jobs:
       name: Free Disk Space (Manual)
       run: |
         echo "Freeing space by deleting mapped host directories..."
+        # We mapped these to /host/... to avoid clashing with container paths
         rm -dr /host/android/* || true
         rm -dr /host/dotnet/* || true
         rm -dr /host/ghc/* || true
@@ -21,8 +22,13 @@ jobs:
         echo "Disk space freed."
         df -h
     -
+      # Bootstrap step – define env vars, aliases, functions once
       name: Bootstrap environment
       run: |
+        # Environment variables (persist via $GITHUB_ENV)
+        # echo "MYVAR=hello" >> $GITHUB_ENV
+        # echo "FOO=bar" >> $GITHUB_ENV
+        # Aliases & functions (persist via $BASH_ENV)
         cat >>"/etc/bootstrap" <<'EOF'
         
           gecho() { printf '\033[0;32m'; command echo "$@"; printf '\033[0m'; }
@@ -53,6 +59,12 @@ jobs:
         key: slackware-packages-${{ github.sha }}
         restore-keys: |
           slackware-packages-
+        # key: ${{ runner.os }}-slackpkg-${{ hashFiles('**/package-list.txt') }}
+        # restore-keys: |
+        #   ${{ runner.os }}-slackpkg-
+        #key: slackpkg-${{ runner.os }}-${{ inputs.VERSION }}-${{ hashFiles('SlackBuilds/**/*') }}
+        #restore-keys: |
+        #  slackpkg-${{ runner.os }}-${{ inputs.VERSION }}-
     -
       name: Download unRaid
       run: |
@@ -90,21 +102,11 @@ jobs:
       name: Patch kernel
       run: |
         . /etc/bootstrap
-        gecho "Inspecting bzfirmware contents..."
-        unsquashfs -ll unRAIDServer/bzfirmware | head -60
         gecho "Copying patches... "
         cd unRAIDServer
-        unsquashfs -d patches bzfirmware src
+        unsquashfs -d patches bzmodules src
         cd ..
-        gecho "Extracted patch tree:"
-        find unRAIDServer/patches -print | head -40
-        PATCH_DIR=$(find unRAIDServer/patches/src -maxdepth 1 -type d -name 'linux-*' | head -1)
-        if [ -z "$PATCH_DIR" ]; then
-          gecho "WARNING: No patch directory found, skipping patch copy."
-        else
-          gecho "Found patch dir: $PATCH_DIR"
-          cp -r "$PATCH_DIR/." linux/
-        fi
+        cp -r unRAIDServer/patches/src/linux-*-Unraid/. linux/
         gecho "done."
         gecho "Applying patches... "
         cd linux
@@ -163,17 +165,20 @@ jobs:
         
         gecho "Making modules... "
         make -j$(nproc) modules > /dev/null
+        # make INSTALL_MOD_PATH=../modules INSTALL_MOD_STRIP=1 modules_install > /dev/null
         make INSTALL_MOD_PATH=../modules modules_install > /dev/null
         find ../modules -name '*.ko' -exec pahole --btf_encode --skip_other {} \;
         cd ..
+        # UPDATED TO -Unraid-eBPF
         depmod -b modules ${KERNEL_VERSION}-Unraid-eBPF
         gecho "done."
         gecho "Creating bzmodules... "
         cd unRAIDServer
         unsquashfs -d modules bzmodules
         cd ..
-        rm -rf unRAIDServer/modules/modules/*-Unraid-eBPF
-        cp -r modules/lib/modules/${KERNEL_VERSION}-Unraid-eBPF unRAIDServer/modules/modules
+        # UPDATED TO -Unraid-eBPF
+        rm -rf unRAIDServer/modules/lib/modules/*-Unraid-eBPF
+        cp -r modules/lib/modules/${KERNEL_VERSION}-Unraid-eBPF unRAIDServer/modules/lib/modules
         cd unRAIDServer
         mksquashfs modules ../bzmodules-${VERSION_ID}
         cd ..
