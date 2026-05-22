@@ -70,9 +70,10 @@ jobs:
       run: |
         . /etc/bootstrap
         gecho "Finding latest unRaid version..."
-        URL=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].url')
-        FILENAME=$(basename "${URL}")
-        NAME=$(curl -s https://releases.unraid.net/usb-creator | jq -r '.os_list[0].name')
+        RESPONSE=$(curl -s https://releases.unraid.net/usb-creator)
+        URL=$(echo $RESPONSE | jq -r '.os_list | max_by(.name | ltrimstr("Unraid ") | split(".") | map(tonumber)) | .url')
+        NAME=$(echo $RESPONSE | jq -r '.os_list | max_by(.name | ltrimstr("Unraid ") | split(".") | map(tonumber)) | .name')
+        FILENAME=$(basename "${URL%%\?*}")
         VERSION_ID=$(echo $NAME | sed 's/^Unraid //')
         echo "VERSION_ID=$VERSION_ID" >> $GITHUB_ENV
         gecho "Downloading ${VERSION_ID}... "
