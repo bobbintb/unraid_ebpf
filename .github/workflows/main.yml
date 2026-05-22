@@ -153,6 +153,12 @@ jobs:
       name: Build
       run: |
         . /etc/bootstrap
+        gecho "Cleaning up before build... "
+        rm -f linux-${KERNEL_VERSION}.tar.xz
+        rm -f unRAIDServer-*.zip
+        rm -rf unRAIDServer/patches
+        df -h
+        gecho "done."
         cd linux
         gecho "Making bzImage... "
         bzimagename=bzimage-${VERSION_ID}
