@@ -110,7 +110,7 @@ jobs:
         cp -r unRAIDServer/patches/src/linux-*-Unraid/. linux/
         gecho "done."
         gecho "Applying patches... "
-        # cd linux
+        cd linux
         find . -type f -iname '*.patch' -print0 | xargs -n1 -0 patch -p1 -i
         gecho "done."
         gecho "Applying kernel config... "
