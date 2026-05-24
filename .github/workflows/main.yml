@@ -199,8 +199,6 @@ jobs:
         llvm-objcopy --dump-section .BTF=vmlinux-${VERSION_ID}.btf vmlinux
         gecho "done."
         gecho "Cleaning up... "
-        pwd
-        tree
         rm vmlinux
         rm -dr ./linux/
         rm -dr ./unRAIDServer/
