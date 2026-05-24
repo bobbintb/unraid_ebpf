@@ -47,7 +47,7 @@ jobs:
         slackpkg update gpg <<< y
         slackpkg remove openssl-3.1.1-x86_64-1 aaa_glibc-solibs-2.37-x86_64-2 coreutils-9.3-x86_64-1 gawk-5.2.2-x86_64-1 gettext-0.22-x86_64-1 libseccomp-2.5.4-x86_64-1 ncurses-6.4_20230610-x86_64-1 squashfs-tools-4.5-x86_64-2 util-linux-2.39.1-x86_64-3 xz-5.4.3-x86_64-1
         slackpkg install zlib nghttp3 pahole llvm libedit libxml2
-        slackpkg upgrade glibc
+        slackpkg upgrade glibc gcc
     - 
       name: Checkout
       uses: actions/checkout@v4
@@ -73,7 +73,7 @@ jobs:
         RESPONSE=$(curl -s https://releases.unraid.net/usb-creator)
         URL=$(echo $RESPONSE | jq -r '.os_list | max_by(.name | ltrimstr("Unraid ") | split(".") | map(tonumber)) | .url' | cut -d'?' -f1)
         NAME=$(echo $RESPONSE | jq -r '.os_list | max_by(.name | ltrimstr("Unraid ") | split(".") | map(tonumber)) | .name')
-        FILENAME=$(basename "${URL%%\?*}")
+        FILENAME=$(basename "${URL}")
         VERSION_ID=$(echo $NAME | sed 's/^Unraid //')
         echo "VERSION_ID=$VERSION_ID" >> $GITHUB_ENV
         gecho "Downloading ${VERSION_ID}... "
@@ -105,7 +105,7 @@ jobs:
         . /etc/bootstrap
         gecho "Copying patches... "
         cd unRAIDServer
-        unsquashfs -d patches bzmodules src
+        unsquashfs -d patches bzfirmware src
         cd ..
         cp -r unRAIDServer/patches/src/linux-*-Unraid/. linux/
         gecho "done."
@@ -114,24 +114,10 @@ jobs:
         find . -type f -iname '*.patch' -print0 | xargs -n1 -0 patch -p1 -i
         gecho "done."
         gecho "Applying kernel config... "
-        cd linux
         make -j$(nproc) olddefconfig
+        # SET THE NEW KERNEL NAME HERE
         ./scripts/config --set-str CONFIG_LOCALVERSION "-Unraid-eBPF"
         ./scripts/config --enable CONFIG_MD_UNRAID \
-            --disable CONFIG_SCHED_CLASS_EXT \
-            --enable CONFIG_IKCONFIG \
-            --enable CONFIG_IKCONFIG_PROC \
-            --enable CONFIG_KPROBES \
-            --enable CONFIG_SECURITY \
-            --enable CONFIG_SECURITY_PATH \
-            --enable CONFIG_FTRACE_SYSCALLS \
-            --enable CONFIG_BPF_LSM \
-            --enable CONFIG_BPF_SYSCALL \
-            --enable CONFIG_BPF_EVENTS \
-            --enable CONFIG_SECURITYFS \
-            --enable CONFIG_BPF_JIT
-        make -j$(nproc) olddefconfig
-        ./scripts/config \
             --enable CONFIG_DEBUG_INFO \
             --disable CONFIG_DEBUG_INFO_NONE \
             --enable CONFIG_DEBUG_INFO_DWARF5 \
@@ -146,8 +132,20 @@ jobs:
             --enable CONFIG_DEBUG_INFO_BTF_MODULES \
             --disable CONFIG_MODULE_ALLOW_BTF_MISMATCH \
             --disable CONFIG_GDB_SCRIPTS \
-            --enable CONFIG_PROBE_EVENTS_BTF_ARGS
-        cp .config ../kernel.config
+            --enable CONFIG_PROBE_EVENTS_BTF_ARGS \
+            --disable CONFIG_SCHED_CLASS_EXT \
+            --enable CONFIG_IKCONFIG \
+            --enable CONFIG_IKCONFIG_PROC \
+            --enable CONFIG_KPROBES \
+            --enable CONFIG_SECURITY \
+            --enable CONFIG_SECURITY_PATH \
+            --enable CONFIG_FTRACE_SYSCALLS \
+            --enable CONFIG_BPF_LSM \
+            --enable CONFIG_BPF_SYSCALL \
+            --enable CONFIG_BPF_EVENTS \
+            --enable CONFIG_SECURITYFS \
+            --enable CONFIG_BPF_JIT
+            cp .config ../kernel.config
         gecho "done."
     -
       name: Build
