@@ -106,7 +106,7 @@ jobs:
         gecho "Copying patches... "
         cd unRAIDServer
         unsquashfs -d patches bzfirmware src
-        cd ..
+        # cd ..
         cp -r unRAIDServer/patches/src/linux-*-Unraid/. linux/
         gecho "done."
         gecho "Applying patches... "
