@@ -105,8 +105,8 @@ jobs:
         . /etc/bootstrap
         gecho "Copying patches... "
         pwd
-        tree
         cd unRAIDServer
+        tree
         unsquashfs -d patches bzfirmware src
         # cd ..
         cp -r unRAIDServer/patches/src/linux-*-Unraid/. linux/
