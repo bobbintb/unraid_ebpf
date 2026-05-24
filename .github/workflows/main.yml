@@ -145,6 +145,7 @@ jobs:
             --enable CONFIG_BPF_EVENTS \
             --enable CONFIG_SECURITYFS \
             --enable CONFIG_BPF_JIT
+            make -j$(nproc) olddefconfig
             cp .config ../kernel.config
         gecho "done."
     -
