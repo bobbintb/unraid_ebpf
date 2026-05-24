@@ -104,9 +104,13 @@ jobs:
       run: |
         . /etc/bootstrap
         gecho "Copying patches... "
+        pwd
+        ls -ls
         cd unRAIDServer
         unsquashfs -d patches bzfirmware src
         # cd ..
+        pwd
+        ls -ls
         cp -r unRAIDServer/patches/src/linux-*-Unraid/. linux/
         gecho "done."
         gecho "Applying patches... "
