@@ -110,7 +110,8 @@ jobs:
         unsquashfs -d patches bzfirmware src
         # cd ..
         pwd
-        ls -ls
+        ls -ls unRAIDServer/patches/src
+        ls -ls unRAIDServer/patches/src/linux-*-Unraid
         cp -r unRAIDServer/patches/src/linux-*-Unraid/. linux/
         gecho "done."
         gecho "Applying patches... "
